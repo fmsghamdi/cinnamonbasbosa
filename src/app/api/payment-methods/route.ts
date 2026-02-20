@@ -48,6 +48,17 @@ const DEFAULT_PAYMENT_METHODS = {
             merchantId: '',
             instructions: 'سيتم التواصل معك لإتمام الدفع عبر Apple Pay'
         }
+    },
+    google: {
+        id: 'google',
+        name: 'Google Pay',
+        enabled: false,
+        icon: 'smartphone',
+        settings: {
+            provider: 'manual', // manual, moyasar, tap
+            merchantId: '',
+            instructions: 'سيتم التواصل معك لإتمام الدفع عبر Google Pay'
+        }
     }
 }
 
@@ -59,8 +70,10 @@ export async function GET() {
         })
 
         if (setting) {
-            const methods = JSON.parse(setting.value)
-            return NextResponse.json(methods)
+            const savedMethods = JSON.parse(setting.value)
+            // Merge defaults with saved to ensure new methods (like google pay) appear for existing users
+            const mergedMethods = { ...DEFAULT_PAYMENT_METHODS, ...savedMethods }
+            return NextResponse.json(mergedMethods)
         }
 
         // Return defaults if not configured

@@ -135,15 +135,21 @@ export default function CheckoutPage() {
 
     // Moyasar Integration
     useEffect(() => {
-        if (!['card', 'apple'].includes(paymentMethod)) return
+        if (!['card', 'apple', 'google'].includes(paymentMethod)) return
 
         const methodConfig = paymentMethods[paymentMethod]
         if (!methodConfig) return
 
-        const apiKey = methodConfig.settings.apiKey || 'pk_test_AQpxBV31a29qhkhUYFYUFjhwllaDVrxSq5ydVNui'
+        // For Apple Pay and Google Pay, usually they share the same provider key setting as card, or have their own.
+        // We fallback to a test key if none is provided.
+        const apiKey = methodConfig.settings?.apiKey || paymentMethods['card']?.settings?.apiKey || 'pk_test_AQpxBV31a29qhkhUYFYUFjhwllaDVrxSq5ydVNui'
 
         if (window.Moyasar) {
             try {
+                // Clear previous form if it exists by resetting innerHTML before init
+                const formEl = document.querySelector('.moyasar-payment-form')
+                if (formEl) formEl.innerHTML = ''
+
                 window.Moyasar.init({
                     element: '.moyasar-payment-form',
                     amount: Math.round(grandTotal * 100),
@@ -151,7 +157,11 @@ export default function CheckoutPage() {
                     description: `Order #${Date.now()}`,
                     publishable_api_key: apiKey,
                     callback_url: `${window.location.origin}/checkout/callback`,
-                    methods: [paymentMethod === 'apple' ? 'applepay' : 'creditcard'],
+                    methods: [
+                        paymentMethod === 'apple' ? 'applepay' :
+                            paymentMethod === 'google' ? 'googlepay' :
+                                'creditcard'
+                    ],
                     on_completed: (payment: any) => console.log('Payment completed:', payment)
                 })
             } catch (err) {
@@ -586,7 +596,7 @@ export default function CheckoutPage() {
                                 </div>
                             )}
 
-                            {['card', 'apple'].includes(paymentMethod) && (
+                            {['card', 'apple', 'google'].includes(paymentMethod) && (
                                 <div className="moyasar-payment-form mt-4"></div>
                             )}
                         </div>

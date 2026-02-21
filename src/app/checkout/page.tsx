@@ -162,6 +162,11 @@ export default function CheckoutPage() {
                             paymentMethod === 'google' ? 'googlepay' :
                                 'creditcard'
                     ],
+                    apple_pay: {
+                        country: 'SA',
+                        label: 'Cinamon Basbosa',
+                        validate_merchant_url: 'https://api.moyasar.com/v1/applepay/initiate'
+                    },
                     on_completed: (payment: any) => console.log('Payment completed:', payment)
                 })
             } catch (err) {
@@ -398,7 +403,12 @@ export default function CheckoutPage() {
                                         dir="ltr"
                                         placeholder="05xxxxxxxx"
                                         value={customerPhone}
-                                        onChange={e => setCustomerPhone(e.target.value)}
+                                        onChange={e => {
+                                            const val = e.target.value
+                                                .replace(/[٠-٩]/g, d => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)])
+                                                .replace(/[^\d+]/g, '');
+                                            setCustomerPhone(val);
+                                        }}
                                         onBlur={checkPhone}
                                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); checkPhone() } }}
                                         className={customerStatus === 'existing' ? 'border-green-500' : ''}

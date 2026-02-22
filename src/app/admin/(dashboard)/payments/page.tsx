@@ -7,6 +7,8 @@ import {
     AlertCircle, CheckCircle, Settings
 } from 'lucide-react'
 
+import { useLanguage } from '@/context/LanguageContext'
+
 interface PaymentMethodSettings {
     [key: string]: string
 }
@@ -28,35 +30,28 @@ const ICONS: Record<string, React.ReactNode> = {
     'smartphone': <Smartphone size={22} />,
 }
 
-// Field labels in Arabic
-const FIELD_LABELS: Record<string, string> = {
-    bankName: 'اسم البنك',
-    accountHolder: 'اسم صاحب الحساب',
-    accountNumber: 'رقم الحساب',
-    iban: 'رقم الآيبان (IBAN)',
-    instructions: 'تعليمات للعميل',
-    provider: 'مزود الخدمة',
-    merchantId: 'معرف التاجر (Merchant ID)',
-    apiKey: 'مفتاح API',
-}
-
-const FIELD_PLACEHOLDERS: Record<string, string> = {
-    bankName: 'مثال: الراجحي',
-    accountHolder: 'مثال: محمد أحمد',
-    accountNumber: 'مثال: 1234567890',
-    iban: 'مثال: SA...',
-    instructions: 'تعليمات تظهر للعميل بعد اختيار طريقة الدفع',
-    provider: '',
-    merchantId: 'اتركه فارغ إذا كان يدوي',
-    apiKey: 'اتركه فارغ إذا كان يدوي',
-}
-
 export default function PaymentsPage() {
+    const { t } = useLanguage()
     const [methods, setMethods] = useState<PaymentMethods>({})
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
     const [expandedMethod, setExpandedMethod] = useState<string | null>(null)
+
+    // Field labels using translation
+    const getFieldLabel = (key: string) => {
+        const labels: Record<string, string> = {
+            bankName: t('admin.bankName'),
+            accountHolder: t('admin.accountHolder'),
+            accountNumber: t('admin.accountNumber'),
+            iban: t('admin.iban'),
+            instructions: t('admin.instructions'),
+            provider: t('admin.provider'),
+            merchantId: t('admin.merchantId'),
+            apiKey: t('admin.apiKey'),
+        }
+        return labels[key] || key
+    }
 
     useEffect(() => {
         fetchMethods()
@@ -106,7 +101,7 @@ export default function PaymentsPage() {
                 setTimeout(() => setSaved(false), 3000)
             }
         } catch {
-            alert('حدث خطأ في الحفظ')
+            alert(t('checkout.errorOccurred'))
         } finally {
             setSaving(false)
         }
@@ -115,7 +110,7 @@ export default function PaymentsPage() {
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
-                <p>جاري التحميل...</p>
+                <p>{t('admin.loading')}</p>
             </div>
         )
     }
@@ -126,12 +121,12 @@ export default function PaymentsPage() {
         <div className="payments-page">
             <div className="page-header">
                 <div>
-                    <h1>طرق الدفع</h1>
-                    <p>إدارة وتهيئة طرق الدفع المتاحة للعملاء</p>
+                    <h1>{t('admin.payments')}</h1>
+                    <p>{t('admin.paymentsDesc')}</p>
                 </div>
                 <button className="save-btn" onClick={handleSave} disabled={saving}>
                     {saved ? <CheckCircle size={18} /> : <Save size={18} />}
-                    {saving ? 'جاري الحفظ...' : saved ? 'تم الحفظ' : 'حفظ التغييرات'}
+                    {saving ? t('admin.saving') : saved ? t('admin.settingsSavedSuccess').replace(' ✅', '') : t('admin.saveChanges')}
                 </button>
             </div>
 
@@ -139,18 +134,18 @@ export default function PaymentsPage() {
             <div className="summary-bar">
                 <div className="summary-stat">
                     <span className="stat-num">{enabledCount}</span>
-                    <span className="stat-label">طرق مفعّلة</span>
+                    <span className="stat-label">{t('admin.enabledMethods')}</span>
                 </div>
                 <div className="summary-stat">
                     <span className="stat-num">{Object.keys(methods).length - enabledCount}</span>
-                    <span className="stat-label">طرق معطّلة</span>
+                    <span className="stat-label">{t('admin.disabledMethods')}</span>
                 </div>
             </div>
 
             {enabledCount === 0 && (
                 <div className="warning-banner">
                     <AlertCircle size={18} />
-                    <span>تحذير: لا توجد طرق دفع مفعّلة! العملاء لن يستطيعوا إتمام الطلب.</span>
+                    <span>{t('admin.noEnabledMethodsWarning')}</span>
                 </div>
             )}
 
@@ -170,7 +165,7 @@ export default function PaymentsPage() {
                                     <div>
                                         <h3>{method.name}</h3>
                                         <span className={`method-status ${method.enabled ? 'on' : 'off'}`}>
-                                            {method.enabled ? 'مفعّل' : 'معطّل'}
+                                            {method.enabled ? t('admin.enabled') : t('admin.disabled')}
                                         </span>
                                     </div>
                                 </div>
@@ -179,7 +174,7 @@ export default function PaymentsPage() {
                                     <button
                                         className={`toggle-btn ${method.enabled ? 'on' : 'off'}`}
                                         onClick={() => toggleMethod(id)}
-                                        title={method.enabled ? 'تعطيل' : 'تفعيل'}
+                                        title={method.enabled ? t('admin.disable') : t('admin.enable')}
                                     >
                                         {method.enabled ?
                                             <ToggleRight size={32} /> :
@@ -202,7 +197,7 @@ export default function PaymentsPage() {
                             {isExpanded && hasSettings && (
                                 <div className="method-settings">
                                     <div className="settings-divider">
-                                        <span>إعدادات {method.name}</span>
+                                        <span>{t('admin.settingsFor')} {method.name}</span>
                                     </div>
                                     <div className="settings-grid">
                                         {Object.entries(method.settings).map(([key, value]) => {
@@ -210,17 +205,17 @@ export default function PaymentsPage() {
                                             if (key === 'provider') {
                                                 return (
                                                     <div key={key} className="setting-field">
-                                                        <label>{FIELD_LABELS[key] || key}</label>
+                                                        <label>{getFieldLabel(key)}</label>
                                                         <select
                                                             value={value}
                                                             onChange={e => updateSetting(id, key, e.target.value)}
                                                         >
-                                                            <option value="manual">يدوي (تواصل عبر واتساب)</option>
+                                                            <option value="manual">{t('admin.manualPaymentInfo')}</option>
                                                             <option value="moyasar">Moyasar</option>
                                                             <option value="tap">Tap Payments</option>
                                                         </select>
                                                         {value === 'manual' && (
-                                                            <small>سيتم التواصل مع العميل لإتمام الدفع يدوياً</small>
+                                                            <small>{t('admin.manualPaymentNote')}</small>
                                                         )}
                                                     </div>
                                                 )
@@ -230,11 +225,11 @@ export default function PaymentsPage() {
                                             if (key === 'instructions') {
                                                 return (
                                                     <div key={key} className="setting-field full-width">
-                                                        <label>{FIELD_LABELS[key] || key}</label>
+                                                        <label>{getFieldLabel(key)}</label>
                                                         <textarea
                                                             value={value}
                                                             onChange={e => updateSetting(id, key, e.target.value)}
-                                                            placeholder={FIELD_PLACEHOLDERS[key] || ''}
+                                                            placeholder={''}
                                                             rows={2}
                                                         />
                                                     </div>
@@ -244,12 +239,12 @@ export default function PaymentsPage() {
                                             // Regular input
                                             return (
                                                 <div key={key} className="setting-field">
-                                                    <label>{FIELD_LABELS[key] || key}</label>
+                                                    <label>{getFieldLabel(key)}</label>
                                                     <input
                                                         type={key.toLowerCase().includes('key') || key.toLowerCase().includes('password') ? 'password' : 'text'}
                                                         value={value}
                                                         onChange={e => updateSetting(id, key, e.target.value)}
-                                                        placeholder={FIELD_PLACEHOLDERS[key] || ''}
+                                                        placeholder={''}
                                                         dir={key === 'iban' || key === 'accountNumber' || key === 'merchantId' || key === 'apiKey' ? 'ltr' : 'rtl'}
                                                     />
                                                 </div>

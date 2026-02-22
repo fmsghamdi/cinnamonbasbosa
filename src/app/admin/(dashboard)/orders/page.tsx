@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface Order {
     id: number
@@ -19,6 +20,7 @@ interface Order {
 }
 
 export default function OrdersPage() {
+    const { t, language } = useLanguage()
     const [orders, setOrders] = useState<Order[]>([])
     const [loading, setLoading] = useState(true)
     const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
@@ -38,7 +40,7 @@ export default function OrdersPage() {
     }
 
     const updateStatus = async (id: number, newStatus: string) => {
-        if (!confirm(`هل أنت متأكد من تغيير الحالة إلى "${newStatus}"؟`)) return
+        if (!confirm(`${t('admin.confirmStatusChange')} "${newStatus}"${t('admin.confirmDeleteStatus')}`)) return
 
         try {
             const res = await fetch(`/api/orders/${id}`, {
@@ -53,7 +55,7 @@ export default function OrdersPage() {
                 ))
             }
         } catch (error) {
-            alert('فشل تحديث الحالة')
+            alert(t('admin.updateStatusFailed'))
         }
     }
 
@@ -66,7 +68,7 @@ export default function OrdersPage() {
             const items = JSON.parse(itemsJson)
             return items.map((i: any) => `${i.name} (x${i.quantity})`).join(', ')
         } catch (e) {
-            return 'خطأ في البيانات'
+            return t('admin.dataError')
         }
     }
 
@@ -81,31 +83,31 @@ export default function OrdersPage() {
 
     const getStatusText = (status: string) => {
         switch (status) {
-            case 'new': return 'جديد'
-            case 'completed': return 'مكتمل'
-            case 'cancelled': return 'ملغي'
+            case 'new': return t('admin.statusNew')
+            case 'completed': return t('admin.statusCompleted')
+            case 'cancelled': return t('admin.statusCancelled')
             default: return status
         }
     }
 
-    if (loading) return <div>جاري التحميل...</div>
+    if (loading) return <div>{t('admin.loading')}</div>
 
     return (
         <div>
-            <h1>إدارة الطلبات</h1>
+            <h1>{t('admin.manageOrders')}</h1>
 
             <div className="orders-table-container">
-                <table className="orders-table">
+                <table className="orders-table" style={{ textAlign: language === 'ar' ? 'right' : 'left' }}>
                     <thead>
                         <tr>
-                            <th>رقم الطلب</th>
-                            <th>العميل</th>
-                            <th>الجوال</th>
-                            <th>الإجمالي</th>
-                            <th>طريقة الدفع</th>
-                            <th>الحالة</th>
-                            <th>التاريخ</th>
-                            <th>الإجراءات</th>
+                            <th>{t('admin.orderNumber')}</th>
+                            <th>{t('admin.customerNameTh')}</th>
+                            <th>{t('admin.mobile')}</th>
+                            <th>{t('admin.totalTh')}</th>
+                            <th>{t('admin.paymentMethodTh')}</th>
+                            <th>{t('admin.statusTh')}</th>
+                            <th>{t('admin.dateTh')}</th>
+                            <th>{t('admin.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -115,17 +117,17 @@ export default function OrdersPage() {
                                     <td>#{order.id}</td>
                                     <td>{order.customerName}</td>
                                     <td dir="ltr">{order.customerPhone}</td>
-                                    <td>{order.total} ر.س</td>
-                                    <td>{order.paymentMethod === 'cash' ? 'عند الاستلام' : 'تحويل'}</td>
+                                    <td>{order.total} {t('common.currency')}</td>
+                                    <td>{order.paymentMethod === 'cash' ? t('admin.payCash') : order.paymentMethod === 'transfer' ? t('admin.payTransfer') : t('admin.payApple')}</td>
                                     <td>
                                         <span className="status-badge" style={{ backgroundColor: getStatusColor(order.status) }}>
                                             {getStatusText(order.status)}
                                         </span>
                                     </td>
-                                    <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                                    <td>{new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}</td>
                                     <td>
                                         <button className="btn-sm" onClick={() => toggleExpand(order.id)}>
-                                            {expandedOrderId === order.id ? 'إخفاء' : 'تفاصيل'}
+                                            {expandedOrderId === order.id ? t('admin.hideDetails') : t('admin.showDetails')}
                                         </button>
                                     </td>
                                 </tr>
@@ -133,38 +135,38 @@ export default function OrdersPage() {
                                     <tr className="details-row">
                                         <td colSpan={8}>
                                             <div className="details-content">
-                                                <p><strong>العنوان:</strong> {order.address}</p>
+                                                <p><strong>{t('admin.addressLabel')}</strong> {order.address}</p>
                                                 {(order.deliveryDate || order.deliveryTime) && (
-                                                    <p><strong>وقت التوصيل:</strong> {order.deliveryDate} {order.deliveryTime}</p>
+                                                    <p><strong>{t('admin.deliveryTimeLabel')}</strong> {order.deliveryDate} {order.deliveryTime}</p>
                                                 )}
                                                 {order.latitude && order.longitude && (
                                                     <p>
-                                                        <strong>الموقع:</strong>{' '}
+                                                        <strong>{t('admin.locationLabel')}</strong>{' '}
                                                         <a
                                                             href={`https://maps.google.com/?q=${order.latitude},${order.longitude}`}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             style={{ color: '#3b82f6', textDecoration: 'underline' }}
                                                         >
-                                                            عرض على الخريطة
+                                                            {t('admin.viewOnMap')}
                                                         </a>
                                                     </p>
                                                 )}
-                                                <p><strong>المنتجات:</strong> {parseItems(order.items)}</p>
+                                                <p><strong>{t('admin.productsLabel')}</strong> {parseItems(order.items)}</p>
                                                 <div className="actions">
                                                     <button
                                                         className="btn-action complete"
                                                         onClick={() => updateStatus(order.id, 'completed')}
                                                         disabled={order.status === 'completed'}
                                                     >
-                                                        تم التوصيل
+                                                        {t('admin.markCompleted')}
                                                     </button>
                                                     <button
                                                         className="btn-action cancel"
                                                         onClick={() => updateStatus(order.id, 'cancelled')}
                                                         disabled={order.status === 'cancelled'}
                                                     >
-                                                        إلغاء الطلب
+                                                        {t('admin.cancelOrderBtn')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -184,11 +186,11 @@ export default function OrdersPage() {
                     max-width: 100%;
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
-                    background: white;
+                    background: var(--card-bg);
                     border-radius: 8px;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                     margin-bottom: 1rem;
-                    border: 1px solid #eee;
+                    border: 1px solid var(--card-border);
                     padding-bottom: 5px; /* Space for scrollbar */
                 }
                 .orders-table {
@@ -199,13 +201,13 @@ export default function OrdersPage() {
                 }
                 .orders-table th, .orders-table td {
                     padding: 1rem;
-                    border-bottom: 1px solid #eee;
+                    border-bottom: 1px solid var(--card-border);
                     white-space: nowrap; /* Prevent ugly wrapping */
                 }
                 .orders-table th {
-                    background: #f9fafb;
+                    background: var(--gray-100);
                     font-weight: 600;
-                    color: #374151;
+                    color: var(--text);
                 }
                 .status-badge {
                     padding: 0.25rem 0.5rem;
@@ -215,13 +217,15 @@ export default function OrdersPage() {
                 }
                 .btn-sm {
                     padding: 0.25rem 0.75rem;
-                    background: #f3f4f6;
+                    background: var(--gray-200);
+                    color: var(--text);
                     border-radius: 4px;
+                    border: none;
                     font-size: 0.875rem;
                     cursor: pointer;
                 }
                 .details-row {
-                    background: #f9fafb;
+                    background: var(--gray-100);
                 }
                 .details-content {
                     padding: 1rem;

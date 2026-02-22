@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { MapPin, Calendar, CreditCard, Banknote, Navigation, Smartphone, User, ArrowRight, Building2, Copy, Check, Info, Lock, Map } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
@@ -34,6 +35,7 @@ interface DeliveryZone {
 
 export default function CheckoutPage() {
     const { items, total, clearCart } = useCart()
+    const { t, language } = useLanguage()
     const router = useRouter()
 
     const [customerName, setCustomerName] = useState('')
@@ -203,7 +205,7 @@ export default function CheckoutPage() {
 
     const handleLogin = async () => {
         if (!password) {
-            setLoginError('الرجاء كتابة كلمة المرور')
+            setLoginError(t('checkout.pleaseEnterPassword'))
             return
         }
 
@@ -225,10 +227,10 @@ export default function CheckoutPage() {
                 setIsLoggedIn(true)
                 setLoginError('')
             } else {
-                setLoginError('كلمة المرور غير صحيحة')
+                setLoginError(t('checkout.incorrectPassword'))
             }
         } catch (e) {
-            setLoginError('خطأ في الاتصال')
+            setLoginError(t('checkout.connectionError'))
         }
     }
 
@@ -277,7 +279,7 @@ export default function CheckoutPage() {
     }
 
     const handleCheckout = async () => {
-        if (!customerName || !customerPhone) return alert('البيانات ناقصة')
+        if (!customerName || !customerPhone) return alert(t('checkout.missingDetails'))
         setIsSubmitting(true)
 
         try {
@@ -358,7 +360,7 @@ export default function CheckoutPage() {
             window.location.href = `/order-success?id=${orderId}`
 
         } catch (e) {
-            alert('حدث خطأ')
+            alert(t('checkout.errorOccurred'))
         } finally {
             setIsSubmitting(false)
         }
@@ -380,9 +382,9 @@ export default function CheckoutPage() {
                 <div className="modal-header">
                     <Link href="/" className="back-btn">
                         <ArrowRight size={20} />
-                        <span>عودة</span>
+                        <span>{t('checkout.back')}</span>
                     </Link>
-                    <h2>إتمام الطلب 🧁</h2>
+                    <h2>{t('checkout.title')}</h2>
                     <div className="placeholder"></div>
                 </div>
 
@@ -392,10 +394,10 @@ export default function CheckoutPage() {
 
                         {/* 1. User Info */}
                         <div className="section-block">
-                            <h3 className="section-title"><User size={18} /> بياناتك</h3>
+                            <h3 className="section-title"><User size={18} /> {t('checkout.userDetails')}</h3>
 
                             <div className="form-group">
-                                <label>رقم الجوال</label>
+                                <label>{t('checkout.phone')}</label>
                                 <div className="input-with-icon">
                                     <Smartphone size={18} className="icon" />
                                     <input
@@ -421,18 +423,18 @@ export default function CheckoutPage() {
                             {customerStatus === 'existing' && !isLoggedIn && (
                                 <div className="welcome-banner">
                                     <div className="banner-content">
-                                        <p>👋 أهلاً بك {welcomeName} مجدداً!</p>
-                                        <p className="sub-text">أدخل كلمة المرور</p>
+                                        <p>{t('checkout.welcomeBack')} {welcomeName} {t('checkout.again')}</p>
+                                        <p className="sub-text">{t('checkout.enterPassword')}</p>
                                     </div>
                                     <div className="password-row">
                                         <input
                                             type="password"
-                                            placeholder="كلمة المرور"
+                                            placeholder={t('checkout.enterPassword')}
                                             value={password}
                                             onChange={e => setPassword(e.target.value)}
                                             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleLogin() } }}
                                         />
-                                        <button onClick={handleLogin}>دخول</button>
+                                        <button onClick={handleLogin}>{t('checkout.login')}</button>
                                     </div>
                                     <div className="forgot-pass-container">
                                         <a
@@ -440,7 +442,7 @@ export default function CheckoutPage() {
                                             target="_blank"
                                             className="forgot-pass-link"
                                         >
-                                            نسيت كلمة المرور؟
+                                            {t('checkout.forgotPassword')}
                                         </a>
                                     </div>
                                     {loginError && <p className="error-msg">{loginError}</p>}
@@ -449,17 +451,17 @@ export default function CheckoutPage() {
 
                             {isLoggedIn && (
                                 <div className="success-banner">
-                                    ✅ تم تسجيل الدخول بنجاح!
+                                    {t('checkout.loginSuccess')}
                                 </div>
                             )}
 
                             {/* Show name field only for new/guest customers */}
                             {customerStatus !== 'existing' && (
                                 <div className="form-group">
-                                    <label>الاسم</label>
+                                    <label>{t('checkout.name')}</label>
                                     <input
                                         type="text"
-                                        placeholder="الاسم الكريم"
+                                        placeholder={t('checkout.namePlaceholder')}
                                         value={customerName}
                                         onChange={e => setCustomerName(e.target.value)}
                                     />
@@ -469,7 +471,7 @@ export default function CheckoutPage() {
                             {/* New Customer Password (Optional) */}
                             {customerStatus === 'new' && (
                                 <div className="form-group">
-                                    <label>كلمة المرور (اختياري لحفظ بياناتك)</label>
+                                    <label>{t('checkout.passwordOptional')}</label>
                                     <div className="input-with-icon">
                                         <Lock size={18} className="icon" />
                                         <input
@@ -485,20 +487,20 @@ export default function CheckoutPage() {
 
                         {/* 2. Delivery */}
                         <div className="section-block">
-                            <h3 className="section-title"><MapPin size={18} /> الاستلام</h3>
+                            <h3 className="section-title"><MapPin size={18} /> {t('checkout.deliveryMethod')}</h3>
 
                             <div className="delivery-tabs">
                                 <button
                                     className={`tab ${deliveryType === 'delivery' ? 'active' : ''}`}
                                     onClick={() => setDeliveryType('delivery')}
                                 >
-                                    <Navigation size={16} /> توصيل
+                                    <Navigation size={16} /> {t('checkout.delivery')}
                                 </button>
                                 <button
                                     className={`tab ${deliveryType === 'pickup' ? 'active' : ''}`}
                                     onClick={() => setDeliveryType('pickup')}
                                 >
-                                    <Building2 size={16} /> استلام
+                                    <Building2 size={16} /> {t('checkout.pickup')}
                                 </button>
                             </div>
 
@@ -510,20 +512,20 @@ export default function CheckoutPage() {
                                         className="mb-2"
                                     >
                                         {deliveryZones.map(z => (
-                                            <option key={z.id} value={z.id}>{z.name} ({z.price} ر.س)</option>
+                                            <option key={z.id} value={z.id}>{z.name} ({z.price} {t('common.currency')})</option>
                                         ))}
                                     </select>
                                     <div className="location-row">
                                         <button
                                             onClick={getCurrentLocation}
                                             className="loc-btn"
-                                            title="تحديد موقعك"
+                                            title={t('checkout.locateMe')}
                                             disabled={isGettingLocation}
                                         >
                                             {isGettingLocation ? <span className="spinner-small">⏳</span> : <Navigation size={18} />}
                                         </button>
                                         <textarea
-                                            placeholder="تفاصيل العنوان (المدينة، الحي، الشارع).."
+                                            placeholder={t('checkout.addressDetails')}
                                             value={address}
                                             onChange={e => setAddress(e.target.value)}
                                             rows={2}
@@ -540,7 +542,7 @@ export default function CheckoutPage() {
                                                 onClick={() => setShowMap(true)}
                                                 className="change-location-btn"
                                             >
-                                                <Map size={14} /> تعديل الموقع
+                                                <Map size={14} /> {t('checkout.changeLocation')}
                                             </button>
                                         </div>
                                     )}
@@ -557,7 +559,7 @@ export default function CheckoutPage() {
                                 </div>
                             ) : (
                                 <div className="pickup-info">
-                                    📍 فرع العوالي - مكة المكرمة
+                                    {t('checkout.branchPickup')}
                                 </div>
                             )}
 
@@ -565,10 +567,10 @@ export default function CheckoutPage() {
                             <div className="mt-4 border-t pt-4 border-gray-100">
                                 <label className="text-sm font-bold text-gray-600 mb-2 block flex items-center gap-2">
                                     <Info size={16} className="text-primary-orange" />
-                                    ملاحظات إضافية (اختياري)
+                                    {t('checkout.additionalNotes')}
                                 </label>
                                 <textarea
-                                    placeholder="اكتب أي ملاحظات خاصة بطلبك هنا..."
+                                    placeholder={t('checkout.notesPlaceholder')}
                                     value={customerNote}
                                     onChange={e => setCustomerNote(e.target.value)}
                                     className="custom-note-field w-full"
@@ -578,7 +580,7 @@ export default function CheckoutPage() {
 
                         {/* 3. Payment */}
                         <div className="section-block">
-                            <h3 className="section-title"><CreditCard size={18} /> الدفع</h3>
+                            <h3 className="section-title"><CreditCard size={18} /> {t('checkout.payment')}</h3>
                             <div className="payment-grid">
                                 {enabledMethods.map(m => (
                                     <label key={m.id} className={`pay-card ${paymentMethod === m.id ? 'active' : ''}`}>
@@ -602,7 +604,7 @@ export default function CheckoutPage() {
                                         <span>{paymentMethods['transfer'].settings.iban}</span>
                                         <button onClick={() => copyToClipboard(paymentMethods['transfer'].settings.iban, 'iban')}><Copy size={14} /></button>
                                     </div>
-                                    {copiedField === 'iban' && <span className="copied-tag">تم النسخ!</span>}
+                                    {copiedField === 'iban' && <span className="copied-tag">{t('checkout.copied')}</span>}
                                 </div>
                             )}
 
@@ -616,7 +618,7 @@ export default function CheckoutPage() {
                     {/* Summary Sidebar */}
                     <div className="summary-section">
                         <div className="summary-card">
-                            <h3>ملخص الطلب</h3>
+                            <h3>{t('checkout.orderSummary')}</h3>
                             <div className="cart-list">
                                 {items.map((item, idx) => (
                                     <div key={`${item.id}-${idx}`} className="summary-item">
@@ -624,14 +626,14 @@ export default function CheckoutPage() {
                                             <span>{item.quantity}x {item.name}</span>
                                             {item.options && <p className="text-xs text-primary-orange">{item.options}</p>}
                                         </div>
-                                        <span className="price">{item.price * item.quantity} ر.س</span>
+                                        <span className="price">{item.price * item.quantity} {t('common.currency')}</span>
                                     </div>
                                 ))}
                             </div>
                             <div className="totals">
-                                <div className="row"><span>المجموع</span><span>{subTotal}</span></div>
-                                <div className="row"><span>التوصيل</span><span>{deliveryCost}</span></div>
-                                <div className="row total"><span>الإجمالي</span><span>{grandTotal} ر.س</span></div>
+                                <div className="row"><span>{t('checkout.subtotal')}</span><span>{subTotal}</span></div>
+                                <div className="row"><span>{t('checkout.deliveryFee')}</span><span>{deliveryCost}</span></div>
+                                <div className="row total"><span>{t('checkout.grandTotal')}</span><span>{grandTotal} {t('common.currency')}</span></div>
                             </div>
 
                             {!['card', 'apple'].includes(paymentMethod) && (
@@ -640,10 +642,10 @@ export default function CheckoutPage() {
                                     onClick={handleCheckout}
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? 'جاري التنفيذ...' : `أكمل الطلب (${grandTotal} ر.س)`}
+                                    {isSubmitting ? t('checkout.processing') : `${t('checkout.placeOrder')} (${grandTotal} ${t('common.currency')})`}
                                 </button>
                             )}
-                            <p className="secure-badge"><Lock size={12} /> دفع آمن 100%</p>
+                            <p className="secure-badge"><Lock size={12} /> {t('checkout.securePayment')}</p>
                         </div>
                     </div>
                 </div>

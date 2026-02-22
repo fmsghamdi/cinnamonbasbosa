@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, Upload } from 'lucide-react'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface GalleryImage {
     id: number
@@ -11,6 +12,7 @@ interface GalleryImage {
 }
 
 export default function GalleryPage() {
+    const { t } = useLanguage()
     const [images, setImages] = useState<GalleryImage[]>([])
     const [loading, setLoading] = useState(true)
     const [uploading, setUploading] = useState(false)
@@ -68,7 +70,7 @@ export default function GalleryPage() {
     }
 
     const handleDelete = async (id: number) => {
-        if (!confirm('هل أنت متأكد من حذف هذه الصورة؟')) return
+        if (!confirm(t('admin.confirmDeleteImage'))) return
 
         await fetch(`/api/gallery/${id}`, { method: 'DELETE' })
         fetchImages()
@@ -77,10 +79,10 @@ export default function GalleryPage() {
     return (
         <div>
             <div className="header-row">
-                <h1>معرض الصور</h1>
+                <h1>{t('admin.imageGallery')}</h1>
                 <label htmlFor="gallery-upload" className="btn btn-primary upload-btn">
                     <Upload size={18} style={{ marginLeft: '0.5rem' }} />
-                    {uploading ? 'جاري الرفع...' : 'رفع صور'}
+                    {uploading ? t('admin.uploading') : t('admin.uploadImages')}
                     <input
                         id="gallery-upload"
                         type="file"
@@ -93,7 +95,7 @@ export default function GalleryPage() {
                 </label>
             </div>
 
-            {loading ? <p>جاري التحميل...</p> : (
+            {loading ? <p>{t('admin.loading')}</p> : (
                 <div className="gallery-grid">
                     {images.map(img => (
                         <div key={img.id} className="gallery-item">
@@ -113,8 +115,8 @@ export default function GalleryPage() {
 
             {!loading && images.length === 0 && (
                 <div className="empty-state">
-                    <p>لا توجد صور في المعرض</p>
-                    <p className="hint">قم برفع صور لعرضها للزبائن</p>
+                    <p>{t('admin.noImagesInGallery')}</p>
+                    <p className="hint">{t('admin.uploadImagesHint')}</p>
                 </div>
             )}
 
@@ -140,7 +142,7 @@ export default function GalleryPage() {
                     aspect-ratio: 1;
                     border-radius: 8px;
                     overflow: hidden;
-                    background: #f5f5f5;
+                    background: var(--card-bg, #f5f5f5);
                 }
                 .gallery-item img {
                     width: 100%;
@@ -174,7 +176,7 @@ export default function GalleryPage() {
                 .empty-state {
                     text-align: center;
                     padding: 4rem 2rem;
-                    color: #666;
+                    color: var(--text-muted, #666);
                 }
                 .empty-state .hint {
                     font-size: 0.875rem;

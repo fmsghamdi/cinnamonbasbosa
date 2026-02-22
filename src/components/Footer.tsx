@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useLanguage } from '@/context/LanguageContext'
 import Link from 'next/link'
 import { MapPin, Phone, Clock, Instagram, MessageCircle, Twitter, Share2 } from 'lucide-react'
 
 export default function Footer() {
+    const { t } = useLanguage()
     const [settings, setSettings] = useState<Record<string, string>>({})
 
     useEffect(() => {
@@ -32,7 +34,7 @@ export default function Footer() {
                         <div className="footer-brand">
                             <h3 className="footer-logo">{storeName}</h3>
                             <p className="footer-desc">
-                                نقدم لكم أجود أنواع البسبوسة بالقرفة، محضرة بعناية فائقة من أفضل المكونات الطبيعية. نسعى لتقديم تجربة مميزة في كل قطعة.
+                                {settings['footerDesc'] || t('footer.desc')}
                             </p>
                             <div className="social-links">
                                 <a
@@ -97,21 +99,21 @@ export default function Footer() {
 
                         {/* Quick Links */}
                         <div className="footer-links">
-                            <h4>روابط سريعة</h4>
+                            <h4>{t('footer.quickLinks')}</h4>
                             <ul>
                                 <li>
                                     <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
-                                        الرئيسية
+                                        {t('footer.home')}
                                     </a>
                                 </li>
                                 <li>
                                     <a href="#products" onClick={(e) => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }) }}>
-                                        المنتجات
+                                        {t('footer.products')}
                                     </a>
                                 </li>
                                 <li>
                                     <a href="#gallery" onClick={(e) => { e.preventDefault(); document.getElementById('gallery')?.scrollIntoView({ behavior: 'smooth' }) }}>
-                                        معرض الصور
+                                        {t('footer.gallery')}
                                     </a>
                                 </li>
                             </ul>
@@ -119,7 +121,7 @@ export default function Footer() {
 
                         {/* Contact */}
                         <div className="footer-contact">
-                            <h4>تواصل معنا</h4>
+                            <h4>{t('footer.contact')}</h4>
                             <div className="contact-items">
                                 <a
                                     href={`https://wa.me/${whatsappNumber}`}
@@ -132,11 +134,11 @@ export default function Footer() {
                                 </a>
                                 <div className="contact-item">
                                     <Clock size={16} />
-                                    <span>يومياً من 8 صباحاً - 10 مساءً</span>
+                                    <span>{t('footer.hours')}</span>
                                 </div>
                                 <div className="contact-item">
                                     <MapPin size={16} />
-                                    <span>المملكة العربية السعودية</span>
+                                    <span>{t('footer.country')}</span>
                                 </div>
                             </div>
                         </div>
@@ -147,7 +149,7 @@ export default function Footer() {
             {/* Bottom bar */}
             <div className="footer-bottom">
                 <div className="container">
-                    <p>© {new Date().getFullYear()} {storeName}. جميع الحقوق محفوظة.</p>
+                    <p>© {new Date().getFullYear()} {storeName}. {t('footer.rights')}</p>
                 </div>
             </div>
 

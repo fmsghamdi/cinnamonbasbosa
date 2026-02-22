@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useLanguage } from '@/context/LanguageContext'
 import { X, ChevronRight, ChevronLeft, Camera } from 'lucide-react'
 
 interface GalleryImage {
@@ -10,6 +11,7 @@ interface GalleryImage {
 }
 
 export default function Gallery() {
+  const { t } = useLanguage()
   const [images, setImages] = useState<GalleryImage[]>([])
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -87,8 +89,8 @@ export default function Gallery() {
       <div className="container">
         <div className="gallery-section-header">
           <Camera size={24} color="#D2691E" />
-          <h2>معرض الصور</h2>
-          <p>لحظات مميزة من مطبخنا</p>
+          <h2>{t('gallery.title')}</h2>
+          <p>{t('gallery.subtitle')}</p>
         </div>
 
         <div className="gallery-masonry-grid">

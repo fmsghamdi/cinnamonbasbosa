@@ -7,6 +7,8 @@ import {
     BarChart3, Settings, UserCheck, UserX, Search, CreditCard
 } from 'lucide-react'
 
+import { useLanguage } from '@/context/LanguageContext'
+
 interface StaffMember {
     id: number
     username: string
@@ -17,22 +19,11 @@ interface StaffMember {
     createdAt: string
 }
 
-const PERMISSIONS = [
-    { key: 'orders', label: 'الطلبات', icon: <ClipboardList size={16} />, desc: 'عرض وإدارة طلبات العملاء' },
-    { key: 'products', label: 'المنتجات', icon: <ShoppingBag size={16} />, desc: 'إضافة وتعديل المنتجات' },
-    { key: 'gallery', label: 'معرض الصور', icon: <Image size={16} />, desc: 'رفع وإدارة الصور' },
-    { key: 'customers', label: 'العملاء', icon: <Users2 size={16} />, desc: 'عرض بيانات العملاء' },
-    { key: 'reports', label: 'التقارير', icon: <BarChart3 size={16} />, desc: 'الاطلاع على التقارير' },
-    { key: 'payments', label: 'طرق الدفع', icon: <CreditCard size={16} />, desc: 'إدارة وتهيئة طرق الدفع' },
-    { key: 'settings', label: 'الإعدادات', icon: <Settings size={16} />, desc: 'تعديل إعدادات الموقع' },
-]
-
-const ROLES = [
-    { value: 'staff', label: 'موظف', desc: 'صلاحيات محددة' },
-    { value: 'manager', label: 'مدير', desc: 'جميع الصلاحيات' },
-]
+// We will handle translations inside the component
+// PERMISSIONS and ROLES need to be translated dynamically inside the component
 
 export default function StaffPage() {
+    const { t } = useLanguage()
     const [staff, setStaff] = useState<StaffMember[]>([])
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
@@ -48,6 +39,21 @@ export default function StaffPage() {
     const [formRole, setFormRole] = useState('staff')
     const [formPermissions, setFormPermissions] = useState<string[]>([])
     const [formError, setFormError] = useState('')
+
+    const PERMISSIONS = [
+        { key: 'orders', label: t('admin.perms.orders'), icon: <ClipboardList size={16} />, desc: t('admin.perms.ordersDesc') },
+        { key: 'products', label: t('admin.perms.products'), icon: <ShoppingBag size={16} />, desc: t('admin.perms.productsDesc') },
+        { key: 'gallery', label: t('admin.perms.gallery'), icon: <Image size={16} />, desc: t('admin.perms.galleryDesc') },
+        { key: 'customers', label: t('admin.perms.customers'), icon: <Users2 size={16} />, desc: t('admin.perms.customersDesc') },
+        { key: 'reports', label: t('admin.perms.reports'), icon: <BarChart3 size={16} />, desc: t('admin.perms.reportsDesc') },
+        { key: 'payments', label: t('admin.perms.payments'), icon: <CreditCard size={16} />, desc: t('admin.perms.paymentsDesc') },
+        { key: 'settings', label: t('admin.perms.settings'), icon: <Settings size={16} />, desc: t('admin.perms.settingsDesc') },
+    ]
+
+    const ROLES = [
+        { value: 'staff', label: t('admin.staffRole'), desc: '' },
+        { value: 'manager', label: t('admin.managerRole'), desc: t('admin.managerAutoPerms') },
+    ]
 
     useEffect(() => {
         fetchStaff()
@@ -99,15 +105,15 @@ export default function StaffPage() {
 
     const handleSave = async () => {
         if (!formName || !formUsername) {
-            setFormError('الاسم واسم المستخدم مطلوبين')
+            setFormError(t('admin.nameAndUsernameRequired'))
             return
         }
         if (!editingStaff && !formPassword) {
-            setFormError('كلمة المرور مطلوبة')
+            setFormError(t('admin.passwordRequired'))
             return
         }
         if (formRole === 'staff' && formPermissions.length === 0) {
-            setFormError('اختر صلاحية واحدة على الأقل')
+            setFormError(t('admin.selectOnePermission'))
             return
         }
 
@@ -134,7 +140,7 @@ export default function StaffPage() {
                     setShowModal(false)
                 } else {
                     const data = await res.json()
-                    setFormError(data.error || 'حدث خطأ')
+                    setFormError(data.error || t('admin.unexpectedErrorText'))
                 }
             } else {
                 // Create
@@ -154,11 +160,11 @@ export default function StaffPage() {
                     await fetchStaff()
                     setShowModal(false)
                 } else {
-                    setFormError(data.error || 'حدث خطأ')
+                    setFormError(data.error || t('admin.unexpectedErrorText'))
                 }
             }
         } catch {
-            setFormError('حدث خطأ')
+            setFormError(t('admin.unexpectedErrorText'))
         } finally {
             setSaving(false)
         }
@@ -203,7 +209,7 @@ export default function StaffPage() {
     if (loading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-                <p>جاري التحميل...</p>
+                <p>{t('admin.loading')}</p>
             </div>
         )
     }
@@ -212,12 +218,12 @@ export default function StaffPage() {
         <div className="staff-page">
             <div className="page-header">
                 <div>
-                    <h1>إدارة الموظفين</h1>
-                    <p>إضافة وإدارة حسابات الموظفين وصلاحياتهم</p>
+                    <h1>{t('admin.staff')}</h1>
+                    <p>{t('admin.staffDesc')}</p>
                 </div>
                 <button className="add-btn" onClick={openCreateModal}>
                     <Plus size={18} />
-                    إضافة موظف
+                    {t('admin.addStaff')}
                 </button>
             </div>
 
@@ -226,7 +232,7 @@ export default function StaffPage() {
                 <Search size={18} />
                 <input
                     type="text"
-                    placeholder="بحث بالاسم أو اسم المستخدم..."
+                    placeholder={t('admin.searchStaff')}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                 />
@@ -236,11 +242,11 @@ export default function StaffPage() {
             {filteredStaff.length === 0 ? (
                 <div className="empty-state">
                     <Users2 size={48} />
-                    <p>{search ? 'لا توجد نتائج' : 'لم يتم إضافة موظفين بعد'}</p>
+                    <p>{search ? t('admin.noStaffFound') : t('admin.noStaffAdded')}</p>
                     {!search && (
                         <button className="add-btn-sm" onClick={openCreateModal}>
                             <Plus size={16} />
-                            إضافة أول موظف
+                            {t('admin.addFirstStaff')}
                         </button>
                     )}
                 </div>
@@ -262,22 +268,22 @@ export default function StaffPage() {
                                     </div>
                                     <span className={`role-badge ${s.role}`}>
                                         <Shield size={12} />
-                                        {s.role === 'manager' ? 'مدير' : 'موظف'}
+                                        {s.role === 'manager' ? t('admin.managerRole') : t('admin.staffRole')}
                                     </span>
                                 </div>
 
                                 <div className="card-perms">
-                                    <span className="perms-label">الصلاحيات:</span>
+                                    <span className="perms-label">{t('admin.permissionsLevel')}</span>
                                     <div className="perms-tags">
                                         {s.role === 'manager' ? (
-                                            <span className="perm-tag all">جميع الصلاحيات</span>
+                                            <span className="perm-tag all">{t('admin.allPermissions')}</span>
                                         ) : (
                                             perms.length > 0 ? perms.map(p => (
                                                 <span key={p} className="perm-tag">
                                                     {PERMISSIONS.find(pp => pp.key === p)?.label || p}
                                                 </span>
                                             )) : (
-                                                <span className="perm-tag none">بدون صلاحيات</span>
+                                                <span className="perm-tag none">{t('admin.noPermissions')}</span>
                                             )
                                         )}
                                     </div>
@@ -285,29 +291,29 @@ export default function StaffPage() {
 
                                 <div className="card-meta">
                                     <span className={`status-dot ${s.active ? 'active' : 'inactive'}`}>
-                                        {s.active ? 'نشط' : 'معطّل'}
+                                        {s.active ? t('admin.active') : t('admin.inactive')}
                                     </span>
                                     <span className="date">{new Date(s.createdAt).toLocaleDateString('ar-SA')}</span>
                                 </div>
 
                                 <div className="card-actions">
-                                    <button className="action-btn edit" onClick={() => openEditModal(s)} title="تعديل">
+                                    <button className="action-btn edit" onClick={() => openEditModal(s)} title={t('admin.edit')}>
                                         <Edit3 size={15} />
                                     </button>
                                     <button
                                         className={`action-btn ${s.active ? 'deactivate' : 'activate'}`}
                                         onClick={() => handleToggleActive(s)}
-                                        title={s.active ? 'تعطيل' : 'تفعيل'}
+                                        title={s.active ? t('admin.disable') : t('admin.enable')}
                                     >
                                         {s.active ? <UserX size={15} /> : <UserCheck size={15} />}
                                     </button>
                                     {deleteConfirm === s.id ? (
                                         <div className="delete-confirm">
-                                            <button onClick={() => handleDelete(s.id)} className="action-btn delete-yes">حذف</button>
-                                            <button onClick={() => setDeleteConfirm(null)} className="action-btn delete-no">إلغاء</button>
+                                            <button onClick={() => handleDelete(s.id)} className="action-btn delete-yes">{t('admin.deletePrompt')}</button>
+                                            <button onClick={() => setDeleteConfirm(null)} className="action-btn delete-no">{t('admin.cancelPrompt')}</button>
                                         </div>
                                     ) : (
-                                        <button className="action-btn delete" onClick={() => setDeleteConfirm(s.id)} title="حذف">
+                                        <button className="action-btn delete" onClick={() => setDeleteConfirm(s.id)} title={t('admin.deletePrompt')}>
                                             <Trash2 size={15} />
                                         </button>
                                     )}
@@ -318,12 +324,11 @@ export default function StaffPage() {
                 </div>
             )}
 
-            {/* Create/Edit Modal */}
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>{editingStaff ? 'تعديل موظف' : 'إضافة موظف جديد'}</h2>
+                            <h2>{editingStaff ? t('admin.editStaffParams') : t('admin.addStaffNew')}</h2>
                             <button onClick={() => setShowModal(false)}><X size={20} /></button>
                         </div>
 
@@ -331,38 +336,38 @@ export default function StaffPage() {
 
                         <div className="form-fields">
                             <div className="form-group">
-                                <label>الاسم الكامل *</label>
+                                <label>{t('admin.fullName')}</label>
                                 <input
                                     type="text"
                                     value={formName}
                                     onChange={e => setFormName(e.target.value)}
-                                    placeholder="مثال: أحمد محمد"
+                                    placeholder={t('admin.fullNamePlaceholder')}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>اسم المستخدم *</label>
+                                <label>{t('admin.username')}</label>
                                 <input
                                     type="text"
                                     value={formUsername}
                                     onChange={e => setFormUsername(e.target.value)}
-                                    placeholder="مثال: ahmed"
+                                    placeholder={t('admin.usernamePlaceholder')}
                                     disabled={!!editingStaff}
                                     dir="ltr"
                                 />
-                                {editingStaff && <small>لا يمكن تغيير اسم المستخدم</small>}
+                                {editingStaff && <small>{t('admin.usernameNoChange')}</small>}
                             </div>
                             <div className="form-group">
-                                <label>{editingStaff ? 'كلمة المرور الجديدة (اتركها فارغة للإبقاء)' : 'كلمة المرور *'}</label>
+                                <label>{editingStaff ? t('admin.passwordNewOrKeep') : t('admin.passwordRequiredStar')}</label>
                                 <input
                                     type="password"
                                     value={formPassword}
                                     onChange={e => setFormPassword(e.target.value)}
-                                    placeholder="••••••"
+                                    placeholder={t('admin.passwordPlaceholder')}
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label>الدور</label>
+                                <label>{t('admin.role')}</label>
                                 <div className="role-select">
                                     {ROLES.map(r => (
                                         <button
@@ -380,7 +385,7 @@ export default function StaffPage() {
 
                             {formRole === 'staff' && (
                                 <div className="form-group">
-                                    <label>الصلاحيات *</label>
+                                    <label>{t('admin.permissionsLabel')}</label>
                                     <div className="permissions-grid">
                                         {PERMISSIONS.map(p => (
                                             <button
@@ -406,7 +411,7 @@ export default function StaffPage() {
                             {formRole === 'manager' && (
                                 <div className="manager-note">
                                     <Shield size={16} />
-                                    <span>المدير يحصل على جميع الصلاحيات تلقائياً</span>
+                                    <span>{t('admin.managerAutoPerms')}</span>
                                 </div>
                             )}
                         </div>
@@ -414,10 +419,10 @@ export default function StaffPage() {
                         <div className="modal-footer">
                             <button className="save-modal-btn" onClick={handleSave} disabled={saving}>
                                 <Save size={16} />
-                                {saving ? 'جاري الحفظ...' : editingStaff ? 'حفظ التغييرات' : 'إنشاء الحساب'}
+                                {saving ? t('admin.saving') : editingStaff ? t('admin.saveChanges') : t('admin.createAccount')}
                             </button>
                             <button className="cancel-modal-btn" onClick={() => setShowModal(false)}>
-                                إلغاء
+                                {t('admin.cancelPrompt')}
                             </button>
                         </div>
                     </div>

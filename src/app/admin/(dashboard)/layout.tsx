@@ -2,8 +2,10 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, ShoppingBag, Settings, LogOut, Image as ImageIcon, Home, ClipboardList, BarChart3, Users, Users2, CreditCard } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, Settings, LogOut, Image as ImageIcon, Home, ClipboardList, BarChart3, Users, Users2, CreditCard, Languages } from 'lucide-react'
 import LogoutButton from '@/components/admin/LogoutButton'
+import AdminLangSwitcher from '@/components/admin/AdminLangSwitcher'
+import { getServerLanguage } from '@/lib/serverLanguage'
 
 // Permission to page mapping
 const permissionPages: Record<string, string> = {
@@ -24,6 +26,7 @@ interface StaffSession {
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const { t, language } = await getServerLanguage()
     const cookieStore = await cookies()
     const adminSession = cookieStore.get('admin_session')
     const staffSessionCookie = cookieStore.get('staff_session')
@@ -49,17 +52,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
         return staffSession?.permissions?.includes(perm) || false
     }
 
-    const displayName = isAdmin ? 'المدير' : staffSession?.name || 'موظف'
-    const roleLabel = isAdmin ? 'مالك النظام' : (staffSession?.role === 'manager' ? 'مدير' : 'موظف')
+    const displayName = isAdmin ? t('admin.manager') : staffSession?.name || t('admin.employee')
+    const roleLabel = isAdmin ? t('admin.owner') : (staffSession?.role === 'manager' ? t('admin.manager') : t('admin.employee'))
 
     return (
-        <div className="dashboard-layout">
+        <div className="dashboard-layout" dir={language === 'ar' ? 'rtl' : 'ltr'}>
             <aside className="sidebar">
                 <div className="brand">
                     <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
                         <Image src="/logo-brand.svg" alt="Logo" width={0} height={0} sizes="100vw" style={{ width: '100%', maxWidth: '160px', height: 'auto', marginBottom: '10px', filter: 'brightness(0) invert(1)' }} />
                     </div>
-                    <h3>لوحة التحكم</h3>
+                    <h3>{t('admin.dashboard')}</h3>
                     <div className="user-info">
                         <span className="user-name">{displayName}</span>
                         <span className="user-role">{roleLabel}</span>
@@ -68,65 +71,65 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 <nav>
                     <Link href="/" className="nav-item nav-item-home">
                         <Home size={20} />
-                        <span>عرض الموقع</span>
+                        <span>{t('admin.viewSite')}</span>
                     </Link>
                     <div className="nav-divider"></div>
                     <Link href="/admin/dashboard" className="nav-item">
                         <LayoutDashboard size={20} />
-                        <span>الرئيسية</span>
+                        <span>{t('admin.home')}</span>
                     </Link>
                     {hasPermission('orders') && (
                         <Link href="/admin/orders" className="nav-item">
                             <ClipboardList size={20} />
-                            <span>الطلبات</span>
+                            <span>{t('admin.orders')}</span>
                         </Link>
                     )}
                     {hasPermission('products') && (
                         <Link href="/admin/products" className="nav-item">
                             <ShoppingBag size={20} />
-                            <span>المنتجات</span>
+                            <span>{t('admin.products')}</span>
                         </Link>
                     )}
                     {hasPermission('gallery') && (
                         <Link href="/admin/gallery" className="nav-item">
                             <ImageIcon size={20} />
-                            <span>معرض الصور</span>
+                            <span>{t('admin.gallery')}</span>
                         </Link>
                     )}
                     {hasPermission('customers') && (
                         <Link href="/admin/customers" className="nav-item">
                             <Users size={20} />
-                            <span>العملاء</span>
+                            <span>{t('admin.customers')}</span>
                         </Link>
                     )}
                     {hasPermission('reports') && (
                         <Link href="/admin/reports" className="nav-item">
                             <BarChart3 size={20} />
-                            <span>التقارير</span>
+                            <span>{t('admin.reports')}</span>
                         </Link>
                     )}
                     {hasPermission('payments') && (
                         <Link href="/admin/payments" className="nav-item">
                             <CreditCard size={20} />
-                            <span>طرق الدفع</span>
+                            <span>{t('admin.payments')}</span>
                         </Link>
                     )}
                     {isAdmin && (
                         <>
                             <Link href="/admin/staff" className="nav-item">
                                 <Users2 size={20} />
-                                <span>الموظفين</span>
+                                <span>{t('admin.staff')}</span>
                             </Link>
                             <Link href="/admin/settings" className="nav-item">
                                 <Settings size={20} />
-                                <span>الإعدادات</span>
+                                <span>{t('admin.settings')}</span>
                             </Link>
                         </>
                     )}
                     {!isAdmin && hasPermission('settings') && (
                         <Link href="/admin/settings" className="nav-item">
                             <Settings size={20} />
-                            <span>الإعدادات</span>
+                            <span>{t('admin.settings')}</span>
                         </Link>
                     )}
                 </nav>
@@ -137,9 +140,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <main className="main-content">
                 <header className="dashboard-header">
                     <div className="header-title">
-                        <h2>لوحة التحكم</h2>
+                        <h2>{t('admin.dashboard')}</h2>
                     </div>
-                    <div className="header-actions">
+                    <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <AdminLangSwitcher />
                         <LogoutButton />
                     </div>
                 </header>
@@ -163,6 +167,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
               height: 100vh;
               overflow-y: auto;
            }
+           .dashboard-layout[dir="rtl"] .sidebar { right: 0; left: auto; border-left: 1px solid #333; border-right: none; }
+           .dashboard-layout[dir="ltr"] .sidebar { left: 0; right: auto; border-right: 1px solid #333; border-left: none; }
            .brand {
               padding: 1.5rem 2rem;
               border-bottom: 1px solid #333;
@@ -217,12 +223,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
            }
            .main-content {
               flex: 1;
-              margin-right: 250px;
               background: #f4f6f8;
               min-height: 100vh;
               display: flex;
               flex-direction: column;
            }
+           .dashboard-layout[dir="rtl"] .main-content { margin-right: 250px; margin-left: 0; }
+           .dashboard-layout[dir="ltr"] .main-content { margin-left: 250px; margin-right: 0; }
            .dashboard-header {
               background: white;
               padding: 1rem 2rem;
@@ -246,8 +253,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
               overflow-x: hidden; /* Prevent body scroll */
            }
            @media (max-width: 768px) {
-               .main-content { 
+               .dashboard-layout[dir="rtl"] .main-content, .dashboard-layout[dir="ltr"] .main-content { 
                     margin-right: 0 !important; 
+                    margin-left: 0 !important;
                     width: 100%;
                }
                .content-wrapper { 
@@ -289,9 +297,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
               .nav-divider { display: none; }
               .logout-wrapper { display: none; }
               .main-content {
-                 margin-right: 0;
                  padding: 1rem;
                  padding-bottom: 80px;
+              }
+              .dashboard-layout[dir="rtl"] .main-content, .dashboard-layout[dir="ltr"] .main-content {
+                 margin-right: 0;
+                 margin-left: 0;
               }
            }
         `}</style>

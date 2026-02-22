@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Product } from '@/types'
 import { useCart } from '@/context/CartContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { Plus, Grid3X3, List, SlidersHorizontal, X } from 'lucide-react'
 
 interface ProductGridProps {
@@ -14,6 +15,7 @@ type ViewMode = 'grid' | 'list'
 
 export default function ProductGrid({ products }: ProductGridProps) {
   const { addToCart } = useCart()
+  const { t, language } = useLanguage()
   const [sortBy, setSortBy] = useState<SortOption>('default')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [addedId, setAddedId] = useState<number | null>(null)
@@ -23,7 +25,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
     switch (sortBy) {
       case 'price-low': return a.price - b.price
       case 'price-high': return b.price - a.price
-      case 'name': return a.name.localeCompare(b.name, 'ar')
+      case 'name': return a.name.localeCompare(b.name, language)
       default: return 0
     }
   })
@@ -53,7 +55,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
     return (
       <section className="container" id="products">
         <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text)', opacity: 0.7 }}>
-          <p>لا توجد منتجات حالياً.</p>
+          <p>{t('products.empty')}</p>
         </div>
       </section>
     )
@@ -61,8 +63,8 @@ export default function ProductGrid({ products }: ProductGridProps) {
 
   return (
     <section className="container" id="products" style={{ padding: '4rem 1.5rem' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '0.5rem', fontSize: '2rem' }}>منتجاتنا المميزة</h2>
-      <p className="section-subtitle">اختر من تشكيلتنا الفاخرة المحضرة بعناية</p>
+      <h2 style={{ textAlign: 'center', marginBottom: '0.5rem', fontSize: '2rem' }}>{t('products.title')}</h2>
+      <p className="section-subtitle">{t('products.subtitle')}</p>
 
       {/* Controls Bar */}
       <div className="controls-bar">
@@ -72,10 +74,10 @@ export default function ProductGrid({ products }: ProductGridProps) {
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
           >
-            <option value="default">الترتيب الافتراضي</option>
-            <option value="price-low">السعر: من الأقل</option>
-            <option value="price-high">السعر: من الأعلى</option>
-            <option value="name">الاسم</option>
+            <option value="default">{t('products.sortDefault')}</option>
+            <option value="price-low">{t('products.sortPriceLow')}</option>
+            <option value="price-high">{t('products.sortPriceHigh')}</option>
+            <option value="name">{t('products.sortName')}</option>
           </select>
         </div>
         <div className="view-toggle">
@@ -97,7 +99,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
       </div>
 
       {/* Products Count */}
-      <p className="products-count">{products.length} منتج</p>
+      <p className="products-count">{products.length} {t('products.count')}</p>
 
       <div className={viewMode === 'grid' ? 'product-grid' : 'product-list'}>
         {sortedProducts.map((product, index) => (
@@ -118,7 +120,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
                   onClick={() => handleAddToCart(product)}
                 >
                   <Plus size={20} />
-                  <span>إضافة سريعة</span>
+                  <span>{t('products.quickAdd')}</span>
                 </button>
               </div>
             </div>
@@ -131,10 +133,10 @@ export default function ProductGrid({ products }: ProductGridProps) {
                 onClick={() => handleAddToCart(product)}
               >
                 {addedId === product.id ? (
-                  <span>✓ تمت الإضافة</span>
+                  <span>{t('products.added')}</span>
                 ) : (
                   <>
-                    <span>إضافة للسلة</span>
+                    <span>{t('products.addToCart')}</span>
                     <Plus size={18} />
                   </>
                 )}
@@ -149,27 +151,27 @@ export default function ProductGrid({ products }: ProductGridProps) {
         <div className="custom-modal-overlay" onClick={() => setCustomizingProduct(null)}>
           <div className="custom-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>خيارات المنتج</h3>
+              <h3>{t('products.optionsTitle')}</h3>
               <button onClick={() => setCustomizingProduct(null)}><X size={20} /></button>
             </div>
             <div className="modal-body">
               <p className="product-name">{customizingProduct.name}</p>
-              <p className="modal-subtitle">كيف تحب البسبوسة؟ 😋</p>
+              <p className="modal-subtitle">{t('products.optionsSubtitle')}</p>
 
               <div className="options-grid">
                 <button
                   className="option-btn"
-                  onClick={() => handleOptionSelect('مع قرفة')}
+                  onClick={() => handleOptionSelect(language === 'en' ? 'With Cinnamon' : 'مع قرفة')}
                 >
                   <span className="emoji">🤎</span>
-                  <span>مع قرفة</span>
+                  <span>{t('products.withCinnamon')}</span>
                 </button>
                 <button
                   className="option-btn"
-                  onClick={() => handleOptionSelect('بدون قرفة')}
+                  onClick={() => handleOptionSelect(language === 'en' ? 'Without Cinnamon' : 'بدون قرفة')}
                 >
                   <span className="emoji">💛</span>
-                  <span>بدون قرفة</span>
+                  <span>{t('products.withoutCinnamon')}</span>
                 </button>
               </div>
             </div>

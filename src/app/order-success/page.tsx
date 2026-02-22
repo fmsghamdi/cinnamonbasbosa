@@ -6,8 +6,11 @@ import { CheckCircle, Home, MessageCircle, Package } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
+import { useLanguage } from '@/context/LanguageContext'
+
 function OrderSuccessContent() {
     const searchParams = useSearchParams()
+    const { t } = useLanguage()
     const orderId = searchParams.get('id') || ''
     const [countdown, setCountdown] = useState(15)
     const [whatsappLink, setWhatsappLink] = useState('')
@@ -35,19 +38,19 @@ function OrderSuccessContent() {
                     <div className="ripple ripple-3"></div>
                 </div>
 
-                <h1 className="success-title">تم تأكيد طلبك بنجاح! 🎉</h1>
+                <h1 className="success-title">{t('orderSuccess.title')}</h1>
 
                 {orderId && (
                     <div className="order-id-badge">
-                        <span>رقم الطلب:</span>
+                        <span>{t('orderSuccess.orderNumber')}</span>
                         <strong>#{orderId}</strong>
                     </div>
                 )}
 
                 <p className="success-message">
-                    شكراً لطلبك من <strong>بسبوسة القرفة</strong>!
+                    {t('orderSuccess.thanksMessage')} <strong>{t('orderSuccess.brandName')}</strong>
                     <br />
-                    لإكمال الطلب وتأكيد التوصيل، يرجى إرسال التفاصيل عبر واتساب.
+                    {t('orderSuccess.whatsappPrompt')}
                 </p>
 
                 {/* WhatsApp Button */}
@@ -59,12 +62,12 @@ function OrderSuccessContent() {
                         className="whatsapp-btn-large"
                     >
                         <MessageCircle size={24} />
-                        إرسال الطلب عبر واتساب 💬
+                        {t('orderSuccess.whatsappBtn')}
                     </a>
                 ) : (
                     /* Fallback if link missing for some reason */
                     <Link href="/" className="btn-action btn-home">
-                        عودة للرئيسية
+                        {t('orderSuccess.backHome')}
                     </Link>
                 )}
 
@@ -73,24 +76,24 @@ function OrderSuccessContent() {
                     <div className="step">
                         <div className="step-number">1</div>
                         <div className="step-text">
-                            <h4>تم استلام الطلب</h4>
-                            <p>طلبك في الطريق للمطبخ</p>
+                            <h4>{t('orderSuccess.step1Title')}</h4>
+                            <p>{t('orderSuccess.step1Desc')}</p>
                         </div>
                     </div>
                     <div className="step-line"></div>
                     <div className="step pending">
                         <div className="step-number">2</div>
                         <div className="step-text">
-                            <h4>قيد التحضير</h4>
-                            <p>سنبدأ بتحضير طلبك</p>
+                            <h4>{t('orderSuccess.step2Title')}</h4>
+                            <p>{t('orderSuccess.step2Desc')}</p>
                         </div>
                     </div>
                     <div className="step-line"></div>
                     <div className="step pending">
                         <div className="step-number">3</div>
                         <div className="step-text">
-                            <h4>التوصيل</h4>
-                            <p>طلبك في الطريق إليك</p>
+                            <h4>{t('orderSuccess.step3Title')}</h4>
+                            <p>{t('orderSuccess.step3Desc')}</p>
                         </div>
                     </div>
                 </div>
@@ -99,7 +102,7 @@ function OrderSuccessContent() {
                 <div className="actions">
                     <Link href="/" className="btn-action btn-home-outline">
                         <Home size={20} />
-                        <span>العودة للرئيسية</span>
+                        <span>{t('orderSuccess.backHome')}</span>
                     </Link>
                 </div>
             </div>
@@ -398,7 +401,7 @@ export default function OrderSuccessPage() {
     return (
         <Suspense fallback={
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <p>جاري التحميل...</p>
+                <p>Loading...</p>
             </div>
         }>
             <OrderSuccessContent />

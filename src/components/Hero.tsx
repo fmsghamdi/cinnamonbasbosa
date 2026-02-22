@@ -2,10 +2,12 @@
 
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
+import { useLanguage } from '@/context/LanguageContext'
 
 export default function Hero() {
   const [heroImage, setHeroImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const { t } = useLanguage()
 
   useEffect(() => {
     fetch('/api/settings')
@@ -23,13 +25,13 @@ export default function Hero() {
     <section className="hero">
       <div className="container hero-content">
         <div className="hero-text">
-          <h1>طعم الأصالة في كل قطعة</h1>
-          <p>استمتع بألذ بسبوسة محشوة بالقرفة، محضرة بعناية لتناسب ذوقك الرفيع.</p>
+          <h1>{t('hero.title')}</h1>
+          <p>{t('hero.subtitle')}</p>
           <button
             className="btn-primary-hero"
             onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            اطلب الآن
+            {t('hero.cta')}
           </button>
         </div>
 

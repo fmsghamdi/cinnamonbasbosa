@@ -1,10 +1,12 @@
 import prisma from '@/lib/prisma'
 import { Package, ShoppingCart, DollarSign, CheckCircle, Users, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import { getServerLanguage } from '@/lib/serverLanguage'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
+    const { t, language } = await getServerLanguage()
     const productCount = await prisma.product.count()
     const orderCount = await prisma.order.count()
     const newOrderCount = await prisma.order.count({ where: { status: 'new' } })
@@ -33,9 +35,9 @@ export default async function DashboardPage() {
 
     const getStatusText = (status: string) => {
         switch (status) {
-            case 'new': return 'جديد'
-            case 'completed': return 'مكتمل'
-            case 'cancelled': return 'ملغي'
+            case 'new': return t('admin.statusNew')
+            case 'completed': return t('admin.statusCompleted')
+            case 'cancelled': return t('admin.statusCancelled')
             default: return status
         }
     }
@@ -51,9 +53,9 @@ export default async function DashboardPage() {
 
     const getPaymentText = (method: string) => {
         switch (method) {
-            case 'cash': return 'عند الاستلام'
-            case 'transfer': return 'تحويل بنكي'
-            case 'apple': return 'Apple Pay'
+            case 'cash': return t('admin.payCash')
+            case 'transfer': return t('admin.payTransfer')
+            case 'apple': return t('admin.payApple')
             default: return method
         }
     }
@@ -67,9 +69,9 @@ export default async function DashboardPage() {
     return (
         <div>
             <div className="dashboard-header">
-                <h1>نظرة عامة</h1>
+                <h1>{t('admin.overview')}</h1>
                 <p className="dashboard-date">
-                    {new Date().toLocaleDateString('ar-SA', {
+                    {new Date().toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -85,9 +87,9 @@ export default async function DashboardPage() {
                         <ShoppingCart size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>إجمالي الطلبات</h3>
+                        <h3>{t('admin.totalOrders')}</h3>
                         <p className="value">{orderCount}</p>
-                        <small className="stat-sub">{todayOrders.length} طلب اليوم</small>
+                        <small className="stat-sub">{todayOrders.length} {t('admin.ordersToday')}</small>
                     </div>
                 </div>
 
@@ -96,9 +98,9 @@ export default async function DashboardPage() {
                         <TrendingUp size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>طلبات جديدة</h3>
+                        <h3>{t('admin.newOrders')}</h3>
                         <p className="value" style={{ color: '#f59e0b' }}>{newOrderCount}</p>
-                        <small className="stat-sub">بانتظار المعالجة</small>
+                        <small className="stat-sub">{t('admin.pendingProcessing')}</small>
                     </div>
                 </div>
 
@@ -107,9 +109,9 @@ export default async function DashboardPage() {
                         <DollarSign size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>الإيرادات</h3>
-                        <p className="value" style={{ color: '#22c55e' }}>{totalRevenue.toFixed(0)} <span className="currency">ر.س</span></p>
-                        <small className="stat-sub">{todayRevenue.toFixed(0)} ر.س اليوم</small>
+                        <h3>{t('admin.revenue')}</h3>
+                        <p className="value" style={{ color: '#22c55e' }}>{totalRevenue.toFixed(0)} <span className="currency">{t('common.currency')}</span></p>
+                        <small className="stat-sub">{todayRevenue.toFixed(0)} {t('common.currency')} {t('admin.revenueToday')}</small>
                     </div>
                 </div>
 
@@ -118,9 +120,9 @@ export default async function DashboardPage() {
                         <CheckCircle size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>طلبات مكتملة</h3>
+                        <h3>{t('admin.completedOrders')}</h3>
                         <p className="value" style={{ color: '#8b5cf6' }}>{completedOrderCount}</p>
-                        <small className="stat-sub">{completedRevenue.toFixed(0)} ر.س إيرادات</small>
+                        <small className="stat-sub">{completedRevenue.toFixed(0)} {t('common.currency')} {t('admin.revenue')}</small>
                     </div>
                 </div>
 
@@ -129,9 +131,9 @@ export default async function DashboardPage() {
                         <Package size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>المنتجات</h3>
+                        <h3>{t('admin.products')}</h3>
                         <p className="value" style={{ color: '#D2691E' }}>{productCount}</p>
-                        <small className="stat-sub">منتج نشط</small>
+                        <small className="stat-sub">{t('admin.activeProducts')}</small>
                     </div>
                 </div>
 
@@ -140,9 +142,9 @@ export default async function DashboardPage() {
                         <Users size={24} />
                     </div>
                     <div className="stat-info">
-                        <h3>العملاء المسجلين</h3>
+                        <h3>{t('admin.registeredCustomers')}</h3>
                         <p className="value" style={{ color: '#06b6d4' }}>{customerCount}</p>
-                        <small className="stat-sub">عميل مسجل</small>
+                        <small className="stat-sub">{t('admin.customer')}</small>
                     </div>
                 </div>
             </div>
@@ -152,13 +154,13 @@ export default async function DashboardPage() {
                 {/* Recent Orders */}
                 <div className="dashboard-card">
                     <div className="card-header">
-                        <h2>آخر الطلبات</h2>
-                        <Link href="/admin/orders" className="view-all">عرض الكل ←</Link>
+                        <h2>{t('admin.latestOrders')}</h2>
+                        <Link href="/admin/orders" className="view-all">{t('admin.viewAll')}</Link>
                     </div>
 
                     {recentOrders.length === 0 ? (
                         <div className="empty-state">
-                            <p>لا توجد طلبات بعد</p>
+                            <p>{t('admin.noOrdersYet')}</p>
                         </div>
                     ) : (
                         <div className="recent-orders-list">
@@ -169,7 +171,7 @@ export default async function DashboardPage() {
                                         <div className="order-customer">{order.customerName}</div>
                                     </div>
                                     <div className="order-meta">
-                                        <span className="order-total">{order.total} ر.س</span>
+                                        <span className="order-total">{order.total} {t('common.currency')}</span>
                                         <span className="order-payment">{getPaymentText(order.paymentMethod)}</span>
                                         <span
                                             className="order-status-badge"
@@ -179,7 +181,7 @@ export default async function DashboardPage() {
                                         </span>
                                     </div>
                                     <div className="order-date">
-                                        {new Date(order.createdAt).toLocaleDateString('ar-SA')}
+                                        {new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                                     </div>
                                 </div>
                             ))}
@@ -190,12 +192,12 @@ export default async function DashboardPage() {
                 {/* Order Status Breakdown */}
                 <div className="dashboard-card">
                     <div className="card-header">
-                        <h2>توزيع حالة الطلبات</h2>
+                        <h2>{t('admin.orderStatusDistribution')}</h2>
                     </div>
 
                     {orderCount === 0 ? (
                         <div className="empty-state">
-                            <p>لا توجد بيانات لعرضها</p>
+                            <p>{t('admin.noDataToDisplay')}</p>
                         </div>
                     ) : (
                         <div className="status-breakdown">
@@ -205,21 +207,21 @@ export default async function DashboardPage() {
                                     <div
                                         className="status-bar-segment"
                                         style={{ width: `${completedPercent}%`, backgroundColor: '#22c55e' }}
-                                        title={`مكتمل: ${completedPercent}%`}
+                                        title={`${t('admin.statusCompleted')}: ${completedPercent}%`}
                                     />
                                 )}
                                 {newPercent > 0 && (
                                     <div
                                         className="status-bar-segment"
                                         style={{ width: `${newPercent}%`, backgroundColor: '#3b82f6' }}
-                                        title={`جديد: ${newPercent}%`}
+                                        title={`${t('admin.statusNew')}: ${newPercent}%`}
                                     />
                                 )}
                                 {cancelledPercent > 0 && (
                                     <div
                                         className="status-bar-segment"
                                         style={{ width: `${cancelledPercent}%`, backgroundColor: '#ef4444' }}
-                                        title={`ملغي: ${cancelledPercent}%`}
+                                        title={`${t('admin.statusCancelled')}: ${cancelledPercent}%`}
                                     />
                                 )}
                             </div>
@@ -228,17 +230,17 @@ export default async function DashboardPage() {
                             <div className="status-legend">
                                 <div className="legend-item">
                                     <span className="legend-dot" style={{ backgroundColor: '#22c55e' }}></span>
-                                    <span className="legend-label">مكتمل</span>
+                                    <span className="legend-label">{t('admin.statusCompleted')}</span>
                                     <span className="legend-value">{completedOrderCount} ({completedPercent}%)</span>
                                 </div>
                                 <div className="legend-item">
                                     <span className="legend-dot" style={{ backgroundColor: '#3b82f6' }}></span>
-                                    <span className="legend-label">جديد</span>
+                                    <span className="legend-label">{t('admin.statusNew')}</span>
                                     <span className="legend-value">{newOrderCount} ({newPercent}%)</span>
                                 </div>
                                 <div className="legend-item">
                                     <span className="legend-dot" style={{ backgroundColor: '#ef4444' }}></span>
-                                    <span className="legend-label">ملغي</span>
+                                    <span className="legend-label">{t('admin.statusCancelled')}</span>
                                     <span className="legend-value">{cancelledOrderCount} ({cancelledPercent}%)</span>
                                 </div>
                             </div>
@@ -246,11 +248,11 @@ export default async function DashboardPage() {
                             {/* Summary Cards */}
                             <div className="summary-cards">
                                 <div className="summary-card">
-                                    <h4>متوسط قيمة الطلب</h4>
-                                    <p>{orderCount > 0 ? (totalRevenue / orderCount).toFixed(0) : 0} ر.س</p>
+                                    <h4>{t('admin.averageOrderValue')}</h4>
+                                    <p>{orderCount > 0 ? (totalRevenue / orderCount).toFixed(0) : 0} {t('common.currency')}</p>
                                 </div>
                                 <div className="summary-card">
-                                    <h4>نسبة الإكتمال</h4>
+                                    <h4>{t('admin.completionPercentage')}</h4>
                                     <p>{completedPercent}%</p>
                                 </div>
                             </div>

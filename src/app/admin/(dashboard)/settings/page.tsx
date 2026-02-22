@@ -2,22 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { Save, Plus, Trash2, Upload, Instagram, Twitter, Share2, MapPin, Globe, Phone, Image as ImageIcon, Lock } from 'lucide-react'
+import { useLanguage } from '@/context/LanguageContext'
 
 // --- Inline Styles System (To ensure design works without Tailwind) ---
 const styles: Record<string, React.CSSProperties> = {
     pageWrapper: {
-        backgroundColor: '#f3f4f6', // gray-100
+        backgroundColor: 'var(--bg)',
         minHeight: '100vh',
         padding: '24px',
-        fontFamily: 'inherit',
-        direction: 'rtl'
+        fontFamily: 'inherit'
     },
     header: {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '32px',
-        backgroundColor: 'white',
+        backgroundColor: 'var(--card-bg)',
         padding: '20px',
         borderRadius: '12px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
@@ -25,18 +25,18 @@ const styles: Record<string, React.CSSProperties> = {
     headerTitle: {
         fontSize: '24px',
         fontWeight: 'bold',
-        color: '#111827',
+        color: 'var(--text)',
         marginBottom: '4px'
     },
     headerSubtitle: {
-        color: '#6b7280',
+        color: 'var(--text-muted)',
         fontSize: '14px'
     },
     saveButton: {
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        backgroundColor: '#D2691E',
+        backgroundColor: 'var(--primary, #D2691E)',
         color: 'white',
         border: 'none',
         padding: '10px 24px',
@@ -64,24 +64,24 @@ const styles: Record<string, React.CSSProperties> = {
         gap: '24px'
     },
     card: {
-        backgroundColor: 'white',
+        backgroundColor: 'var(--card-bg)',
         borderRadius: '12px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         overflow: 'hidden',
-        border: '1px solid #e5e7eb'
+        border: '1px solid var(--card-border)'
     },
     cardHeader: {
         padding: '16px 24px',
-        borderBottom: '1px solid #e5e7eb',
+        borderBottom: '1px solid var(--card-border)',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
-        backgroundColor: '#f9fafb'
+        backgroundColor: 'var(--card-bg)'
     },
     cardTitle: {
         fontSize: '18px',
         fontWeight: 'bold',
-        color: '#374151',
+        color: 'var(--text)',
         margin: 0
     },
     cardBody: {
@@ -98,7 +98,7 @@ const styles: Record<string, React.CSSProperties> = {
     label: {
         fontSize: '14px',
         fontWeight: '600',
-        color: '#374151',
+        color: 'var(--text)',
         display: 'flex',
         alignItems: 'center',
         gap: '8px'
@@ -107,20 +107,21 @@ const styles: Record<string, React.CSSProperties> = {
         width: '100%',
         padding: '10px 12px',
         borderRadius: '8px',
-        border: '1px solid #d1d5db',
+        border: '1px solid var(--gray-200)',
         fontSize: '14px',
         outline: 'none',
         transition: 'border-color 0.2s',
-        backgroundColor: '#f9fafb'
+        backgroundColor: 'transparent',
+        color: 'var(--text)'
     },
     imageUploadBox: {
-        border: '2px dashed #d1d5db',
+        border: '2px dashed var(--gray-200)',
         borderRadius: '12px',
         padding: '4px',
         textAlign: 'center',
         cursor: 'pointer',
         position: 'relative',
-        backgroundColor: '#f9fafb',
+        backgroundColor: 'var(--gray-100)',
         minHeight: '200px',
         display: 'flex',
         justifyContent: 'center',
@@ -137,15 +138,15 @@ const styles: Record<string, React.CSSProperties> = {
         alignItems: 'center',
         gap: '12px',
         padding: '12px',
-        backgroundColor: '#f9fafb',
-        border: '1px solid #e5e7eb',
+        backgroundColor: 'var(--gray-100)',
+        border: '1px solid var(--card-border)',
         borderRadius: '8px',
         marginBottom: '12px'
     },
     addButton: {
-        backgroundColor: 'white',
-        border: '1px solid #e5e7eb',
-        color: '#D2691E',
+        backgroundColor: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
+        color: 'var(--primary, #D2691E)',
         padding: '6px 16px',
         borderRadius: '20px',
         fontSize: '13px',
@@ -175,6 +176,7 @@ interface SettingsState {
 }
 
 export default function SettingsPage() {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [uploading, setUploading] = useState(false)
@@ -211,9 +213,9 @@ export default function SettingsPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings)
             })
-            alert('تم حفظ الإعدادات بنجاح ✅')
+            alert(t('admin.settingsSavedSuccess'))
         } catch (error) {
-            alert('حدث خطأ أثناء الحفظ')
+            alert(t('admin.settingsSaveError'))
         } finally {
             setSaving(false)
         }
@@ -233,7 +235,7 @@ export default function SettingsPage() {
             const data = await res.json()
             if (data.url) handleChange('heroImage', data.url)
         } catch (error) {
-            alert('فشل رفع الصورة')
+            alert(t('admin.uploadFailed'))
         } finally {
             setUploading(false)
         }
@@ -257,7 +259,7 @@ export default function SettingsPage() {
     const [changingPassword, setChangingPassword] = useState(false)
 
     const handlePasswordUpdate = async () => {
-        if (!passwordData.old || !passwordData.new) return alert('الرجاء تعبئة جميع حقول كلمة المرور')
+        if (!passwordData.old || !passwordData.new) return alert(t('admin.passwordFillFields'))
 
         setChangingPassword(true)
         try {
@@ -269,20 +271,20 @@ export default function SettingsPage() {
             const data = await res.json()
 
             if (res.ok && data.success) {
-                alert('تم تغيير كلمة المرور بنجاح ✅')
+                alert(t('admin.passwordChangedSuccess'))
                 setPasswordData({ old: '', new: '' })
             } else {
-                alert(data.error || 'فشل تغيير كلمة المرور')
+                alert(data.error || t('admin.passwordChangeFailed'))
             }
         } catch (error) {
-            alert('حدث خطأ غير متوقع')
+            alert(t('admin.unexpectedError'))
             console.error(error)
         } finally {
             setChangingPassword(false)
         }
     }
 
-    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '50px', color: '#666' }}>جاري تحميل الإعدادات...</div>
+    if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '50px', color: 'var(--text-muted)' }}>{t('admin.loadingSettings')}</div>
 
     return (
         <div className="settings-page" style={styles.pageWrapper}>
@@ -291,8 +293,8 @@ export default function SettingsPage() {
                 {/* Header */}
                 <div style={styles.header}>
                     <div>
-                        <h1 style={styles.headerTitle}>إعدادات المتجر</h1>
-                        <p style={styles.headerSubtitle}>إدارة البيانات، التوصيل، وحسابات التواصل</p>
+                        <h1 style={styles.headerTitle}>{t('admin.storeSettings')}</h1>
+                        <p style={styles.headerSubtitle}>{t('admin.storeSettingsDesc')}</p>
                     </div>
                     <button
                         onClick={handleSave}
@@ -300,7 +302,7 @@ export default function SettingsPage() {
                         style={{ ...styles.saveButton, opacity: saving ? 0.7 : 1 }}
                     >
                         <Save size={18} />
-                        {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                        {saving ? t('admin.saving') : t('admin.saveChanges')}
                     </button>
                 </div>
 
@@ -314,22 +316,22 @@ export default function SettingsPage() {
                         {/* Store Info Card */}
                         <div style={styles.card}>
                             <div style={styles.cardHeader}>
-                                <Globe size={20} color="#D2691E" />
-                                <h2 style={styles.cardTitle}>بيانات المتجر</h2>
+                                <Globe size={20} color="var(--primary)" />
+                                <h2 style={styles.cardTitle}>{t('admin.storeData')}</h2>
                             </div>
                             <div style={styles.cardBody}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>اسم المتجر</label>
+                                    <label style={styles.label}>{t('admin.storeName')}</label>
                                     <input
                                         type="text"
                                         value={settings.storeName}
                                         onChange={e => handleChange('storeName', e.target.value)}
                                         style={styles.input}
-                                        placeholder="مثال: بسبوسة القرفة"
+                                        placeholder={t('admin.storeNamePlaceholder')}
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>رقم الواتساب (للتنبيهات)</label>
+                                    <label style={styles.label}>{t('admin.whatsappNumber')}</label>
                                     <div style={{ position: 'relative' }}>
                                         <input
                                             type="text"
@@ -338,11 +340,11 @@ export default function SettingsPage() {
                                             style={{ ...styles.input, direction: 'ltr', textAlign: 'left' }}
                                             placeholder="9665xxxxxxxx"
                                         />
-                                        <Phone size={18} color="#9ca3af" style={{ position: 'absolute', right: '12px', top: '12px' }} />
+                                        <Phone size={18} color="var(--text-muted)" style={{ position: 'absolute', right: '12px', top: '12px' }} />
                                     </div>
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>صورة الواجهة (Hero Image)</label>
+                                    <label style={styles.label}>{t('admin.heroImage')}</label>
                                     <div style={styles.imageUploadBox}>
                                         <input type="file" accept="image/*" onChange={handleFileUpload} style={{ position: 'absolute', width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }} />
 
@@ -351,13 +353,13 @@ export default function SettingsPage() {
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img src={settings.heroImage} alt="Hero" style={styles.previewImage} />
                                                 <div style={{ position: 'absolute', bottom: '10px', left: '10px', backgroundColor: 'rgba(255,255,255,0.9)', padding: '5px 10px', borderRadius: '5px', fontSize: '12px', fontWeight: 'bold', pointerEvents: 'none' }}>
-                                                    {uploading ? 'جاري الرفع...' : 'تغيير الصورة'}
+                                                    {uploading ? t('admin.uploading') : t('admin.changeImage')}
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: '#9ca3af' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text-muted)' }}>
                                                 <ImageIcon size={40} style={{ marginBottom: '10px' }} />
-                                                <span>اضغط لاختيار صورة</span>
+                                                <span>{t('admin.clickToSelectImage')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -369,17 +371,17 @@ export default function SettingsPage() {
                         <div style={styles.card}>
                             <div style={{ ...styles.cardHeader, justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <MapPin size={20} color="#D2691E" />
-                                    <h2 style={styles.cardTitle}>مناطق التوصيل</h2>
+                                    <MapPin size={20} color="var(--primary)" />
+                                    <h2 style={styles.cardTitle}>{t('admin.deliveryZones')}</h2>
                                 </div>
                                 <button onClick={addZone} style={styles.addButton}>
-                                    <Plus size={14} /> إضافة منطقة
+                                    <Plus size={14} /> {t('admin.addZone')}
                                 </button>
                             </div>
                             <div style={styles.cardBody}>
                                 {settings.deliveryZones.length === 0 ? (
-                                    <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af', border: '1px dashed #e5e7eb', borderRadius: '8px' }}>
-                                        لا توجد مناطق مضافة
+                                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', border: '1px dashed var(--gray-200)', borderRadius: '8px' }}>
+                                        {t('admin.noZones')}
                                     </div>
                                 ) : (
                                     settings.deliveryZones.map((zone, idx) => (
@@ -390,7 +392,7 @@ export default function SettingsPage() {
                                                     value={zone.name}
                                                     onChange={(e) => handleZoneChange(idx, 'name', e.target.value)}
                                                     style={styles.input}
-                                                    placeholder="اسم المنطقة"
+                                                    placeholder={t('admin.zoneName')}
                                                 />
                                             </div>
                                             <div style={{ width: '100px' }}>
@@ -399,7 +401,7 @@ export default function SettingsPage() {
                                                     value={zone.price}
                                                     onChange={(e) => handleZoneChange(idx, 'price', Number(e.target.value))}
                                                     style={styles.input}
-                                                    placeholder="السعر"
+                                                    placeholder={t('admin.price')}
                                                 />
                                             </div>
                                             <button onClick={() => removeZone(idx)} style={{ border: 'none', background: 'none', color: '#ef4444', cursor: 'pointer' }}>
@@ -417,12 +419,12 @@ export default function SettingsPage() {
                     <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                         <div style={styles.card}>
                             <div style={styles.cardHeader}>
-                                <Share2 size={20} color="#D2691E" />
-                                <h2 style={styles.cardTitle}>حسابات التواصل</h2>
+                                <Share2 size={20} color="var(--primary)" />
+                                <h2 style={styles.cardTitle}>{t('admin.socialAccounts')}</h2>
                             </div>
                             <div style={styles.cardBody}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}><Instagram size={16} /> انستقرام</label>
+                                    <label style={styles.label}><Instagram size={16} /> {t('admin.instagram')}</label>
                                     <input
                                         type="text"
                                         value={settings.social_instagram}
@@ -432,7 +434,7 @@ export default function SettingsPage() {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}><Twitter size={16} /> تويتر (X)</label>
+                                    <label style={styles.label}><Twitter size={16} /> {t('admin.twitter')}</label>
                                     <input
                                         type="text"
                                         value={settings.social_twitter}
@@ -442,7 +444,7 @@ export default function SettingsPage() {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}><Share2 size={16} /> سناب شات</label>
+                                    <label style={styles.label}><Share2 size={16} /> {t('admin.snapchat')}</label>
                                     <input
                                         type="text"
                                         value={settings.social_snapchat}
@@ -452,7 +454,7 @@ export default function SettingsPage() {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}><Share2 size={16} /> تيك توك</label>
+                                    <label style={styles.label}><Share2 size={16} /> {t('admin.tiktok')}</label>
                                     <input
                                         type="text"
                                         value={settings.social_tiktok}
@@ -461,21 +463,21 @@ export default function SettingsPage() {
                                         placeholder="@username"
                                     />
                                 </div>
-                                <div style={{ backgroundColor: '#fffbeb', padding: '12px', borderRadius: '8px', fontSize: '12px', color: '#92400e', border: '1px solid #fcd34d' }}>
-                                    💡 الروابط ستظهر في أسفل الموقع تلقائياً.
+                                <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '12px', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                                    {t('admin.socialLinksTip')}
                                 </div>
                             </div>
                         </div>
 
                         {/* Password Change Card */}
                         <div style={styles.card}>
-                            <div style={{ ...styles.cardHeader, backgroundColor: '#fef2f2' }}>
+                            <div style={{ ...styles.cardHeader, backgroundColor: 'rgba(239, 68, 68, 0.05)' }}>
                                 <Lock size={20} color="#ef4444" />
-                                <h2 style={{ ...styles.cardTitle, color: '#ef4444' }}>تغيير كلمة المرور</h2>
+                                <h2 style={{ ...styles.cardTitle, color: '#ef4444' }}>{t('admin.changePassword')}</h2>
                             </div>
                             <div style={styles.cardBody}>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>كلمة المرور الحالية</label>
+                                    <label style={styles.label}>{t('admin.currentPassword')}</label>
                                     <input
                                         type="password"
                                         value={passwordData.old}
@@ -485,7 +487,7 @@ export default function SettingsPage() {
                                     />
                                 </div>
                                 <div style={styles.formGroup}>
-                                    <label style={styles.label}>كلمة المرور الجديدة</label>
+                                    <label style={styles.label}>{t('admin.newPassword')}</label>
                                     <input
                                         type="password"
                                         value={passwordData.new}
@@ -509,7 +511,7 @@ export default function SettingsPage() {
                                         opacity: changingPassword ? 0.7 : 1
                                     }}
                                 >
-                                    {changingPassword ? 'جاري التغيير...' : 'تحديث كلمة المرور'}
+                                    {changingPassword ? t('admin.changing') : t('admin.updatePassword')}
                                 </button>
                             </div>
                         </div>

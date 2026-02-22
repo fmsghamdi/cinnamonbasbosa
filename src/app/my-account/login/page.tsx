@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Phone, Lock, LogIn, UserPlus, ArrowRight } from 'lucide-react'
 
+import { useLanguage } from '@/context/LanguageContext'
+
 import Image from 'next/image'
 
 export default function CustomerLoginPage() {
     const router = useRouter()
+    const { t } = useLanguage()
     const [step, setStep] = useState<'phone' | 'login' | 'register'>('phone')
     const [phone, setPhone] = useState('')
     const [password, setPassword] = useState('')
@@ -19,7 +22,7 @@ export default function CustomerLoginPage() {
 
     const handleCheckPhone = async () => {
         if (!phone || phone.length < 9) {
-            setError('يرجى إدخال رقم جوال صحيح')
+            setError(t('myAccount.invalidPhone'))
             return
         }
         setError('')
@@ -34,7 +37,7 @@ export default function CustomerLoginPage() {
                 setStep('register')
             }
         } catch {
-            setError('حدث خطأ، حاول مرة أخرى')
+            setError(t('myAccount.errorOccurred'))
         } finally {
             setLoading(false)
         }
@@ -42,7 +45,7 @@ export default function CustomerLoginPage() {
 
     const handleLogin = async () => {
         if (!password) {
-            setError('يرجى إدخال كلمة المرور')
+            setError(t('myAccount.enterPassword'))
             return
         }
         setError('')
@@ -58,10 +61,10 @@ export default function CustomerLoginPage() {
                 localStorage.setItem('customer', JSON.stringify(data.customer))
                 router.push('/my-account')
             } else {
-                setError(data.error || 'بيانات غير صحيحة')
+                setError(data.error || t('myAccount.invalidData'))
             }
         } catch {
-            setError('حدث خطأ، حاول مرة أخرى')
+            setError(t('myAccount.errorOccurred'))
         } finally {
             setLoading(false)
         }
@@ -69,11 +72,11 @@ export default function CustomerLoginPage() {
 
     const handleRegister = async () => {
         if (!name || !password) {
-            setError('يرجى تعبئة جميع الحقول')
+            setError(t('myAccount.fillAllFields'))
             return
         }
         if (password.length < 4) {
-            setError('كلمة المرور يجب أن تكون 4 أحرف على الأقل')
+            setError(t('myAccount.passwordLength'))
             return
         }
         setError('')
@@ -89,10 +92,10 @@ export default function CustomerLoginPage() {
                 localStorage.setItem('customer', JSON.stringify(data.customer))
                 router.push('/my-account')
             } else {
-                setError(data.error || 'حدث خطأ')
+                setError(data.error || t('myAccount.registerError'))
             }
         } catch {
-            setError('حدث خطأ، حاول مرة أخرى')
+            setError(t('myAccount.errorOccurred'))
         } finally {
             setLoading(false)
         }
@@ -111,17 +114,17 @@ export default function CustomerLoginPage() {
                         <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
                             <Link href="/" className="back-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#666', textDecoration: 'none', fontSize: '0.9rem' }}>
                                 <ArrowRight size={16} />
-                                <span>الرئيسية</span>
+                                <span>{t('myAccount.home')}</span>
                             </Link>
                         </div>
                         <div className="logo-wrapper-customer">
                             <Image src="/logo.svg" alt="Cinnamon Basbosa" width={80} height={80} />
                         </div>
-                        <h1>حسابي</h1>
+                        <h1>{t('myAccount.loginTitle')}</h1>
                         <p>
-                            {step === 'phone' && 'أدخل رقم جوالك للمتابعة'}
-                            {step === 'login' && `مرحباً ${customerName}! أدخل كلمة المرور`}
-                            {step === 'register' && 'أنشئ حسابك الجديد'}
+                            {step === 'phone' && t('myAccount.phonePrompt')}
+                            {step === 'login' && `${t('myAccount.loginPrompt')}${customerName}${t('myAccount.loginPrompt2')}`}
+                            {step === 'register' && t('myAccount.registerPrompt')}
                         </p>
                     </div>
 
@@ -132,12 +135,12 @@ export default function CustomerLoginPage() {
                     {/* Step 1: Phone */}
                     {step === 'phone' && (
                         <div className="form-group">
-                            <label>رقم الجوال</label>
+                            <label>{t('myAccount.phoneLabel')}</label>
                             <div className="input-wrapper">
                                 <Phone size={18} />
                                 <input
                                     type="tel"
-                                    placeholder="05XXXXXXXX"
+                                    placeholder={t('myAccount.phonePlaceholder')}
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
                                     onKeyDown={(e) => handleKeyPress(e, handleCheckPhone)}
@@ -150,7 +153,7 @@ export default function CustomerLoginPage() {
                                 onClick={handleCheckPhone}
                                 disabled={loading}
                             >
-                                {loading ? 'جاري التحقق...' : 'متابعة'}
+                                {loading ? t('myAccount.checkingBtn') : t('myAccount.continueBtn')}
                             </button>
                         </div>
                     )}
@@ -161,14 +164,14 @@ export default function CustomerLoginPage() {
                             <div className="phone-display">
                                 <Phone size={14} />
                                 <span dir="ltr">{phone}</span>
-                                <button onClick={() => { setStep('phone'); setPassword(''); setError('') }}>تغيير</button>
+                                <button onClick={() => { setStep('phone'); setPassword(''); setError('') }}>{t('myAccount.changeBtn')}</button>
                             </div>
-                            <label>كلمة المرور</label>
+                            <label>{t('myAccount.passwordLabel')}</label>
                             <div className="input-wrapper">
                                 <Lock size={18} />
                                 <input
                                     type="password"
-                                    placeholder="أدخل كلمة المرور"
+                                    placeholder={t('myAccount.passwordPlaceholder')}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     onKeyDown={(e) => handleKeyPress(e, handleLogin)}
@@ -181,7 +184,7 @@ export default function CustomerLoginPage() {
                                 disabled={loading}
                             >
                                 <LogIn size={18} />
-                                {loading ? 'جاري الدخول...' : 'تسجيل الدخول'}
+                                {loading ? t('myAccount.loggingInBtn') : t('myAccount.loginBtn')}
                             </button>
                         </div>
                     )}
@@ -192,25 +195,25 @@ export default function CustomerLoginPage() {
                             <div className="phone-display">
                                 <Phone size={14} />
                                 <span dir="ltr">{phone}</span>
-                                <button onClick={() => { setStep('phone'); setPassword(''); setName(''); setError('') }}>تغيير</button>
+                                <button onClick={() => { setStep('phone'); setPassword(''); setName(''); setError('') }}>{t('myAccount.changeBtn')}</button>
                             </div>
-                            <label>الاسم الكامل</label>
+                            <label>{t('myAccount.fullName')}</label>
                             <div className="input-wrapper">
                                 <UserPlus size={18} />
                                 <input
                                     type="text"
-                                    placeholder="أدخل اسمك"
+                                    placeholder={t('myAccount.namePlaceholder')}
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     autoFocus
                                 />
                             </div>
-                            <label>كلمة المرور</label>
+                            <label>{t('myAccount.passwordLabel')}</label>
                             <div className="input-wrapper">
                                 <Lock size={18} />
                                 <input
                                     type="password"
-                                    placeholder="اختر كلمة مرور"
+                                    placeholder={t('myAccount.choosePassword')}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     onKeyDown={(e) => handleKeyPress(e, handleRegister)}
@@ -222,7 +225,7 @@ export default function CustomerLoginPage() {
                                 disabled={loading}
                             >
                                 <UserPlus size={18} />
-                                {loading ? 'جاري التسجيل...' : 'إنشاء حساب'}
+                                {loading ? t('myAccount.registeringBtn') : t('myAccount.registerBtn')}
                             </button>
                         </div>
                     )}

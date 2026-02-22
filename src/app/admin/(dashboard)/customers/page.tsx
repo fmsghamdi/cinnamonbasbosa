@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Users, Phone, MapPin, ShoppingBag, Calendar, X, ChevronLeft, Search } from 'lucide-react'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface CustomerOrder {
     id: number
@@ -25,6 +26,7 @@ interface Customer {
 }
 
 export default function CustomersPage() {
+    const { t, language } = useLanguage()
     const [customers, setCustomers] = useState<Customer[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -50,9 +52,9 @@ export default function CustomersPage() {
 
     const getStatusText = (status: string) => {
         switch (status) {
-            case 'new': return 'جديد'
-            case 'completed': return 'مكتمل'
-            case 'cancelled': return 'ملغي'
+            case 'new': return t('admin.statusNew')
+            case 'completed': return t('admin.statusCompleted')
+            case 'cancelled': return t('admin.statusCancelled')
             default: return status
         }
     }
@@ -68,9 +70,9 @@ export default function CustomersPage() {
 
     const getPaymentText = (method: string) => {
         switch (method) {
-            case 'cash': return 'عند الاستلام'
-            case 'transfer': return 'تحويل بنكي'
-            case 'apple': return 'Apple Pay'
+            case 'cash': return t('admin.payCash')
+            case 'transfer': return t('admin.payTransfer')
+            case 'apple': return t('admin.payApple')
             default: return method
         }
     }
@@ -90,14 +92,14 @@ export default function CustomersPage() {
     }
 
     if (loading) {
-        return <div style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>جاري التحميل...</div>
+        return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>{t('admin.loading')}</div>
     }
 
     return (
         <div>
             <div className="page-header">
-                <h1><Users size={24} /> إدارة العملاء</h1>
-                <span className="customer-count">{customers.length} عميل مسجل</span>
+                <h1><Users size={24} /> {t('admin.manageCustomers')}</h1>
+                <span className="customer-count">{customers.length} {t('admin.registeredCustomersCount')}</span>
             </div>
 
             {/* Search */}
@@ -105,7 +107,7 @@ export default function CustomersPage() {
                 <Search size={18} />
                 <input
                     type="text"
-                    placeholder="البحث بالاسم أو رقم الجوال..."
+                    placeholder={t('admin.searchByMobileName')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -114,7 +116,7 @@ export default function CustomersPage() {
             {filteredCustomers.length === 0 ? (
                 <div className="empty-state">
                     <Users size={48} />
-                    <p>{searchQuery ? 'لا توجد نتائج' : 'لا يوجد عملاء مسجلين بعد'}</p>
+                    <p>{searchQuery ? t('admin.noResults') : t('admin.noCustomersRegistered')}</p>
                 </div>
             ) : (
                 <div className="customers-grid">
@@ -140,19 +142,19 @@ export default function CustomersPage() {
                             <div className="card-stats">
                                 <div className="stat">
                                     <ShoppingBag size={14} />
-                                    <span>{customer.ordersCount} طلب</span>
+                                    <span>{customer.ordersCount} {t('admin.ordersCountLabel')}</span>
                                 </div>
                                 <div className="stat">
-                                    <span className="spent">{customer.totalSpent.toFixed(0)} ر.س</span>
+                                    <span className="spent">{customer.totalSpent.toFixed(0)} {t('common.currency')}</span>
                                 </div>
                             </div>
 
                             <div className="card-footer">
                                 <span className="date">
                                     <Calendar size={12} />
-                                    مسجل {new Date(customer.createdAt).toLocaleDateString('ar-SA')}
+                                    {t('admin.registeredOn')} {new Date(customer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                                 </span>
-                                <span className="view-link">عرض التفاصيل ←</span>
+                                <span className="view-link">{t('admin.viewDetailsBtn')}</span>
                             </div>
                         </div>
                     ))}
@@ -173,7 +175,7 @@ export default function CustomersPage() {
                             }}>
                                 <X size={20} />
                             </button>
-                            <h2>تفاصيل العميل</h2>
+                            <h2>{t('admin.customerDetails')}</h2>
                         </div>
 
                         <div className="modal-body">
@@ -197,18 +199,18 @@ export default function CustomersPage() {
                                     )}
                                     <div className="detail-item">
                                         <Calendar size={16} />
-                                        <span>مسجل منذ {new Date(selectedCustomer.createdAt).toLocaleDateString('ar-SA')}</span>
+                                        <span>{t('admin.registeredSince')} {new Date(selectedCustomer.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}</span>
                                     </div>
                                 </div>
 
                                 <div className="detail-stats">
                                     <div className="d-stat">
                                         <span className="d-stat-value">{selectedCustomer.ordersCount}</span>
-                                        <span className="d-stat-label">طلب</span>
+                                        <span className="d-stat-label">{t('admin.ordersCountLabel')}</span>
                                     </div>
                                     <div className="d-stat">
                                         <span className="d-stat-value">{selectedCustomer.totalSpent.toFixed(0)}</span>
-                                        <span className="d-stat-label">ر.س إجمالي</span>
+                                        <span className="d-stat-label">{t('common.currency')} {t('admin.totalLabel')}</span>
                                     </div>
                                     <div className="d-stat">
                                         <span className="d-stat-value">
@@ -216,7 +218,7 @@ export default function CustomersPage() {
                                                 ? (selectedCustomer.totalSpent / selectedCustomer.ordersCount).toFixed(0)
                                                 : 0}
                                         </span>
-                                        <span className="d-stat-label">ر.س متوسط</span>
+                                        <span className="d-stat-label">{t('common.currency')} {t('admin.avgLabel')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -228,20 +230,20 @@ export default function CustomersPage() {
                                         className="reset-btn-toggle"
                                         onClick={() => setResetPasswordState({ show: true, password: '' })}
                                     >
-                                        تغيير كلمة المرور
+                                        {t('admin.changePassword')}
                                     </button>
                                 ) : (
                                     <div className="reset-form">
                                         <input
                                             type="text"
-                                            placeholder="كلمة المرور الجديدة"
+                                            placeholder={t('admin.newPassword')}
                                             value={resetPassportState.password}
                                             onChange={e => setResetPasswordState({ ...resetPassportState, password: e.target.value })}
                                         />
                                         <button
                                             className="save-pass-btn"
                                             onClick={async () => {
-                                                if (!resetPassportState.password) return alert('أدخل كلمة المرور')
+                                                if (!resetPassportState.password) return alert(t('admin.enterPasswordAlert'))
                                                 setIsResetting(true)
                                                 try {
                                                     const res = await fetch('/api/customers/reset-password', {
@@ -253,26 +255,26 @@ export default function CustomersPage() {
                                                         })
                                                     })
                                                     if (res.ok) {
-                                                        alert('تم تغيير كلمة المرور بنجاح')
+                                                        alert(t('admin.passwordChangedSuccess'))
                                                         setResetPasswordState({ show: false, password: '' })
                                                     } else {
-                                                        alert('حدث خطأ')
+                                                        alert(t('admin.errorOccurred'))
                                                     }
                                                 } catch (e) {
-                                                    alert('فشل الاتصال')
+                                                    alert(t('admin.connFailed'))
                                                 } finally {
                                                     setIsResetting(false)
                                                 }
                                             }}
                                             disabled={isResetting}
                                         >
-                                            {isResetting ? '...' : 'حفظ'}
+                                            {isResetting ? '...' : t('admin.save')}
                                         </button>
                                         <button
                                             className="cancel-pass-btn"
                                             onClick={() => setResetPasswordState({ show: false, password: '' })}
                                         >
-                                            إلغاء
+                                            {t('products.cancel')}
                                         </button>
                                     </div>
                                 )}
@@ -280,9 +282,9 @@ export default function CustomersPage() {
 
                             {/* Orders List */}
                             <div className="orders-section">
-                                <h4>سجل الطلبات ({selectedCustomer.orders.length})</h4>
+                                <h4>{t('admin.orderHistory')} ({selectedCustomer.orders.length})</h4>
                                 {selectedCustomer.orders.length === 0 ? (
-                                    <p className="no-orders">لا توجد طلبات</p>
+                                    <p className="no-orders">{t('admin.noOrdersHistory')}</p>
                                 ) : (
                                     <div className="order-list">
                                         {selectedCustomer.orders.map(order => {
@@ -306,10 +308,10 @@ export default function CustomersPage() {
                                                         ))}
                                                     </div>
                                                     <div className="order-bottom">
-                                                        <span className="order-total">{order.total} ر.س</span>
+                                                        <span className="order-total">{order.total} {t('common.currency')}</span>
                                                         <span className="order-payment">{getPaymentText(order.paymentMethod)}</span>
                                                         <span className="order-date">
-                                                            {new Date(order.createdAt).toLocaleDateString('ar-SA')}
+                                                            {new Date(order.createdAt).toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -349,12 +351,12 @@ export default function CustomersPage() {
                     display: flex;
                     align-items: center;
                     gap: 0.75rem;
-                    background: white;
+                    background: var(--card-bg, white);
                     padding: 0.75rem 1rem;
                     border-radius: 10px;
                     margin-bottom: 1.5rem;
-                    border: 1px solid #e5e7eb;
-                    color: #9ca3af;
+                    border: 1px solid var(--card-border, #e5e7eb);
+                    color: var(--text-muted, #9ca3af);
                 }
                 .search-bar input {
                     border: none;
@@ -362,7 +364,7 @@ export default function CustomersPage() {
                     flex: 1;
                     font-size: 0.95rem;
                     font-family: inherit;
-                    color: #374151;
+                    color: var(--text, #374151);
                     background: transparent;
                 }
 
@@ -383,10 +385,10 @@ export default function CustomersPage() {
                 }
 
                 .customer-card {
-                    background: white;
+                    background: var(--card-bg, white);
                     border-radius: 12px;
                     padding: 1.25rem;
-                    border: 1px solid #f3f4f6;
+                    border: 1px solid var(--card-border, #f3f4f6);
                     cursor: pointer;
                     transition: all 0.2s;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.04);

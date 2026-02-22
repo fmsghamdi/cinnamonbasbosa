@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import { useCart } from '@/context/CartContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { X, Minus, Plus, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function Cart() {
   const { isOpen, toggleCart, items, removeFromCart, updateQuantity, total } = useCart()
+  const { t } = useLanguage()
   const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
 
@@ -33,7 +35,7 @@ export default function Cart() {
               <div className="icon-bg">
                 <ShoppingBag size={22} color="#D2691E" />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">سلة التسوق</h2>
+              <h2 className="text-xl font-bold text-gray-800">{t('cartSection.title')}</h2>
               {items.length > 0 && (
                 <span className="badge">{items.reduce((acc, item) => acc + item.quantity, 0)}</span>
               )}
@@ -50,10 +52,10 @@ export default function Cart() {
                 <div className="empty-icon-wrapper">
                   <ShoppingBag size={56} color="#e5e7eb" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-600 mt-4">سلتك فارغة!</h3>
-                <p className="text-gray-400 text-sm mt-2">أضف بعض السعادة ليومك 😋</p>
+                <h3 className="text-lg font-bold text-gray-600 mt-4">{t('cartSection.emptyTitle')}</h3>
+                <p className="text-gray-400 text-sm mt-2">{t('cartSection.emptySubtitle')}</p>
                 <button onClick={toggleCart} className="start-shopping-btn">
-                  تصفح القائمة
+                  {t('cartSection.browseBtn')}
                 </button>
               </div>
             ) : (
@@ -86,7 +88,7 @@ export default function Cart() {
                       </div>
 
                       <div className="flex justify-between items-end mt-2">
-                        <p className="item-price">{item.price} ر.س</p>
+                        <p className="item-price">{item.price} {t('common.currency')}</p>
 
                         <div className="quantity-controls">
                           <button
@@ -116,12 +118,12 @@ export default function Cart() {
           {items.length > 0 && (
             <div className="cart-footer">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-500 font-medium">الإجمالي الكلي</span>
-                <span className="total-price">{total} ر.س</span>
+                <span className="text-gray-500 font-medium">{t('cartSection.total')}</span>
+                <span className="total-price">{total} {t('common.currency')}</span>
               </div>
 
               <button className="checkout-btn-modern" onClick={handleProceedToCheckout}>
-                <span>إتمام الطلب</span>
+                <span>{t('cartSection.checkout')}</span>
                 <ArrowLeft size={20} className="icon-slide" />
               </button>
             </div>

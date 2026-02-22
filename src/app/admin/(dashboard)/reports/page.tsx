@@ -1,10 +1,12 @@
 import prisma from '@/lib/prisma'
 import { BarChart3, TrendingUp, Calendar, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import Link from 'next/link'
+import { getServerLanguage } from '@/lib/serverLanguage'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ReportsPage() {
+    const { t, language } = await getServerLanguage()
     const orders = await prisma.order.findMany({
         orderBy: { createdAt: 'desc' }
     })
@@ -50,7 +52,7 @@ export default async function ReportsPage() {
         })
 
         last30Days.push({
-            date: d.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' }),
+            date: d.toLocaleDateString(language === 'ar' ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric' }),
             count: dayOrders.length,
             revenue: dayOrders.reduce((sum, o) => sum + o.total, 0)
         })
@@ -69,9 +71,9 @@ export default async function ReportsPage() {
     })
 
     const paymentLabels: Record<string, string> = {
-        'cash': 'عند الاستلام',
-        'transfer': 'تحويل بنكي',
-        'apple': 'Apple Pay'
+        'cash': t('admin.payCash'),
+        'transfer': t('admin.payTransfer'),
+        'apple': t('admin.payApple')
     }
 
     const paymentColors: Record<string, string> = {
@@ -100,7 +102,7 @@ export default async function ReportsPage() {
     return (
         <div>
             <div className="page-header">
-                <h1>📊 تقارير المبيعات</h1>
+                <h1>📊 {t('admin.salesReportsTitle')}</h1>
             </div>
 
             {/* Time Period Cards */}
@@ -110,9 +112,9 @@ export default async function ReportsPage() {
                         <Calendar size={20} />
                     </div>
                     <div>
-                        <small>اليوم</small>
-                        <h3>{todayRevenue.toFixed(0)} ر.س</h3>
-                        <span className="period-count">{todayOrders.length} طلب</span>
+                        <small>{t('admin.today')}</small>
+                        <h3>{todayRevenue.toFixed(0)} {t('common.currency')}</h3>
+                        <span className="period-count">{todayOrders.length} {t('admin.ordersCountLabel')}</span>
                     </div>
                 </div>
                 <div className="period-card">
@@ -120,9 +122,9 @@ export default async function ReportsPage() {
                         <Calendar size={20} />
                     </div>
                     <div>
-                        <small>هذا الأسبوع</small>
-                        <h3>{weekRevenue.toFixed(0)} ر.س</h3>
-                        <span className="period-count">{weekOrders.length} طلب</span>
+                        <small>{t('admin.thisWeek')}</small>
+                        <h3>{weekRevenue.toFixed(0)} {t('common.currency')}</h3>
+                        <span className="period-count">{weekOrders.length} {t('admin.ordersCountLabel')}</span>
                     </div>
                 </div>
                 <div className="period-card">
@@ -130,9 +132,9 @@ export default async function ReportsPage() {
                         <Calendar size={20} />
                     </div>
                     <div>
-                        <small>هذا الشهر</small>
-                        <h3>{monthRevenue.toFixed(0)} ر.س</h3>
-                        <span className="period-count">{monthOrders.length} طلب</span>
+                        <small>{t('admin.thisMonth')}</small>
+                        <h3>{monthRevenue.toFixed(0)} {t('common.currency')}</h3>
+                        <span className="period-count">{monthOrders.length} {t('admin.ordersCountLabel')}</span>
                     </div>
                 </div>
                 <div className="period-card">
@@ -140,9 +142,9 @@ export default async function ReportsPage() {
                         <DollarSign size={20} />
                     </div>
                     <div>
-                        <small>متوسط الطلب</small>
-                        <h3>{avgOrderValue.toFixed(0)} ر.س</h3>
-                        <span className="period-count">{orders.length} طلب إجمالي</span>
+                        <small>{t('admin.avgOrderValueTitle')}</small>
+                        <h3>{avgOrderValue.toFixed(0)} {t('common.currency')}</h3>
+                        <span className="period-count">{orders.length} {t('admin.totalOrdersDesc')}</span>
                     </div>
                 </div>
             </div>
@@ -150,7 +152,7 @@ export default async function ReportsPage() {
             <div className="reports-grid">
                 {/* Daily Revenue Chart */}
                 <div className="report-card chart-card">
-                    <h2><BarChart3 size={20} /> الإيرادات اليومية (آخر 30 يوم)</h2>
+                    <h2><BarChart3 size={20} /> {t('admin.dailyRevenueChartTitle')}</h2>
                     <div className="chart-container">
                         {last30Days.map((day, i) => (
                             <div key={i} className="chart-bar-wrapper">
@@ -161,7 +163,7 @@ export default async function ReportsPage() {
                                             height: `${(day.revenue / maxDailyRevenue) * 100}%`,
                                             backgroundColor: day.revenue > 0 ? 'var(--primary)' : 'var(--gray-200)'
                                         }}
-                                        title={`${day.date}: ${day.revenue} ر.س (${day.count} طلب)`}
+                                        title={`${day.date}: ${day.revenue} ${t('common.currency')} (${day.count} ${t('admin.ordersCountLabel')})`}
                                     />
                                 </div>
                                 {(i === 0 || i === 14 || i === 29) && (
@@ -174,9 +176,9 @@ export default async function ReportsPage() {
 
                 {/* Payment Methods */}
                 <div className="report-card">
-                    <h2>💳 طرق الدفع</h2>
+                    <h2>💳 {t('admin.paymentMethodsChartTitle')}</h2>
                     {Object.keys(paymentBreakdown).length === 0 ? (
-                        <p className="empty">لا توجد بيانات</p>
+                        <p className="empty">{t('admin.noData')}</p>
                     ) : (
                         <div className="payment-list">
                             {Object.entries(paymentBreakdown).map(([method, data]) => (
@@ -184,7 +186,7 @@ export default async function ReportsPage() {
                                     <div className="payment-header">
                                         <span className="payment-dot" style={{ backgroundColor: paymentColors[method] || '#999' }}></span>
                                         <span className="payment-name">{paymentLabels[method] || method}</span>
-                                        <span className="payment-count">{data.count} طلب</span>
+                                        <span className="payment-count">{data.count} {t('admin.ordersCountLabel')}</span>
                                     </div>
                                     <div className="payment-bar-bg">
                                         <div
@@ -195,7 +197,7 @@ export default async function ReportsPage() {
                                             }}
                                         />
                                     </div>
-                                    <span className="payment-total">{data.total.toFixed(0)} ر.س</span>
+                                    <span className="payment-total">{data.total.toFixed(0)} {t('common.currency')}</span>
                                 </div>
                             ))}
                         </div>
@@ -205,9 +207,9 @@ export default async function ReportsPage() {
 
             {/* Top Selling Items */}
             <div className="report-card" style={{ marginTop: '1.5rem' }}>
-                <h2><TrendingUp size={20} /> المنتجات الأكثر مبيعاً</h2>
+                <h2><TrendingUp size={20} /> {t('admin.topSellingProductsTitle')}</h2>
                 {topItems.length === 0 ? (
-                    <p className="empty">لا توجد بيانات</p>
+                    <p className="empty">{t('admin.noData')}</p>
                 ) : (
                     <div className="top-items">
                         {topItems.map((item, i) => (
@@ -223,8 +225,8 @@ export default async function ReportsPage() {
                                     </div>
                                 </div>
                                 <div className="top-item-stats">
-                                    <span className="item-count">{item.count} قطعة</span>
-                                    <span className="item-revenue">{item.revenue.toFixed(0)} ر.س</span>
+                                    <span className="item-count">{item.count} {t('admin.pieces')}</span>
+                                    <span className="item-revenue">{item.revenue.toFixed(0)} {t('common.currency')}</span>
                                 </div>
                             </div>
                         ))}

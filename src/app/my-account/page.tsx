@@ -26,8 +26,11 @@ interface OrderData {
     createdAt: string
 }
 
+import { useLanguage } from '@/context/LanguageContext'
+
 export default function MyAccountPage() {
     const router = useRouter()
+    const { t } = useLanguage()
     const [customer, setCustomer] = useState<CustomerData | null>(null)
     const [orders, setOrders] = useState<OrderData[]>([])
     const [loading, setLoading] = useState(true)
@@ -88,7 +91,7 @@ export default function MyAccountPage() {
                 setCustomer(data.customer)
                 localStorage.setItem('customer', JSON.stringify(data.customer))
                 setEditing(false)
-                setSaveMsg('تم حفظ التغييرات بنجاح ✓')
+                setSaveMsg(t('myAccount.savedSuccess'))
                 setTimeout(() => setSaveMsg(''), 3000)
             }
         } catch {
@@ -105,18 +108,18 @@ export default function MyAccountPage() {
 
     const getStatusInfo = (status: string) => {
         switch (status) {
-            case 'new': return { text: 'قيد المعالجة', color: '#3b82f6', bg: '#eff6ff', icon: <Clock size={14} /> }
-            case 'completed': return { text: 'مكتمل', color: '#22c55e', bg: '#f0fdf4', icon: <CheckCircle size={14} /> }
-            case 'cancelled': return { text: 'ملغي', color: '#ef4444', bg: '#fef2f2', icon: <XCircle size={14} /> }
+            case 'new': return { text: t('admin.statusNew'), color: '#3b82f6', bg: '#eff6ff', icon: <Clock size={14} /> }
+            case 'completed': return { text: t('admin.statusCompleted'), color: '#22c55e', bg: '#f0fdf4', icon: <CheckCircle size={14} /> }
+            case 'cancelled': return { text: t('admin.statusCancelled'), color: '#ef4444', bg: '#fef2f2', icon: <XCircle size={14} /> }
             default: return { text: status, color: '#6b7280', bg: '#f9fafb', icon: <Package size={14} /> }
         }
     }
 
     const getPaymentText = (method: string) => {
         switch (method) {
-            case 'cash': return 'عند الاستلام'
-            case 'transfer': return 'تحويل بنكي'
-            case 'apple': return 'Apple Pay'
+            case 'cash': return t('admin.payCash')
+            case 'transfer': return t('admin.payTransfer')
+            case 'apple': return t('admin.payApple')
             default: return method
         }
     }
@@ -130,7 +133,7 @@ export default function MyAccountPage() {
         return (
             <div className="loading-screen">
                 <div className="spinner"></div>
-                <p>جاري التحميل...</p>
+                <p>{t('myAccount.loading')}</p>
                 <style jsx>{`
                     .loading-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: var(--bg); }
                     .spinner { width: 40px; height: 40px; border: 3px solid var(--gray-200); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -152,11 +155,11 @@ export default function MyAccountPage() {
                 <div className="account-header">
                     <Link href="/" className="back-link">
                         <ArrowRight size={18} />
-                        <span>العودة للموقع</span>
+                        <span>{t('myAccount.backToSite')}</span>
                     </Link>
                     <button className="logout-btn" onClick={handleLogout}>
                         <LogOut size={16} />
-                        <span>خروج</span>
+                        <span>{t('myAccount.logout')}</span>
                     </button>
                 </div>
 
@@ -165,7 +168,7 @@ export default function MyAccountPage() {
                     <div className="profile-avatar">
                         {customer.name.charAt(0)}
                     </div>
-                    <h1>مرحباً، {customer.name}</h1>
+                    <h1>{t('myAccount.welcome')}{customer.name}</h1>
                     <p className="profile-phone" dir="ltr">{customer.phone}</p>
                 </div>
 
@@ -173,17 +176,17 @@ export default function MyAccountPage() {
                 <div className="stats-row">
                     <div className="stat-item">
                         <span className="stat-value">{orders.length}</span>
-                        <span className="stat-label">طلب</span>
+                        <span className="stat-label">{t('myAccount.order')}</span>
                     </div>
                     <div className="stat-divider"></div>
                     <div className="stat-item">
                         <span className="stat-value">{completedOrders}</span>
-                        <span className="stat-label">مكتمل</span>
+                        <span className="stat-label">{t('myAccount.completed')}</span>
                     </div>
                     <div className="stat-divider"></div>
                     <div className="stat-item">
                         <span className="stat-value">{totalSpent.toFixed(0)}</span>
-                        <span className="stat-label">ر.س إجمالي</span>
+                        <span className="stat-label">{t('myAccount.totalSpent')}</span>
                     </div>
                 </div>
 
@@ -194,14 +197,14 @@ export default function MyAccountPage() {
                         onClick={() => setActiveTab('orders')}
                     >
                         <ShoppingBag size={16} />
-                        <span>طلباتي</span>
+                        <span>{t('myAccount.myOrders')}</span>
                     </button>
                     <button
                         className={`tab ${activeTab === 'profile' ? 'active' : ''}`}
                         onClick={() => setActiveTab('profile')}
                     >
                         <User size={16} />
-                        <span>بياناتي</span>
+                        <span>{t('myAccount.myDetails')}</span>
                     </button>
                 </div>
 
@@ -211,8 +214,8 @@ export default function MyAccountPage() {
                         {orders.length === 0 ? (
                             <div className="empty">
                                 <ShoppingBag size={48} />
-                                <p>لا توجد طلبات بعد</p>
-                                <Link href="/" className="shop-link">تصفح المنتجات</Link>
+                                <p>{t('myAccount.noOrders')}</p>
+                                <Link href="/" className="shop-link">{t('myAccount.browseProducts')}</Link>
                             </div>
                         ) : (
                             <div className="orders-list">
@@ -259,18 +262,18 @@ export default function MyAccountPage() {
                                                     </div>
                                                     <div className="order-meta">
                                                         <div className="meta-item">
-                                                            <span>الدفع:</span>
+                                                            <span>{t('myAccount.payment')}</span>
                                                             <span>{getPaymentText(order.paymentMethod)}</span>
                                                         </div>
                                                         {order.deliveryDate && (
                                                             <div className="meta-item">
-                                                                <span>التوصيل:</span>
+                                                                <span>{t('myAccount.delivery')}</span>
                                                                 <span>{order.deliveryDate} {order.deliveryTime || ''}</span>
                                                             </div>
                                                         )}
                                                         <div className="meta-item total-row">
-                                                            <span>الإجمالي:</span>
-                                                            <span>{order.total} ر.س</span>
+                                                            <span>{t('myAccount.total')}</span>
+                                                            <span>{order.total} {t('common.currency')}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -290,13 +293,13 @@ export default function MyAccountPage() {
 
                         <div className="profile-card">
                             <div className="field">
-                                <label><Phone size={14} /> رقم الجوال</label>
+                                <label><Phone size={14} /> {t('myAccount.phone')}</label>
                                 <p className="field-value" dir="ltr">{customer.phone}</p>
-                                <span className="field-note">رقم الجوال لا يمكن تغييره</span>
+                                <span className="field-note">{t('myAccount.phoneNote')}</span>
                             </div>
 
                             <div className="field">
-                                <label><User size={14} /> الاسم</label>
+                                <label><User size={14} /> {t('myAccount.name')}</label>
                                 {editing ? (
                                     <input
                                         type="text"
@@ -310,17 +313,17 @@ export default function MyAccountPage() {
                             </div>
 
                             <div className="field">
-                                <label><MapPin size={14} /> العنوان</label>
+                                <label><MapPin size={14} /> {t('myAccount.address')}</label>
                                 {editing ? (
                                     <textarea
                                         value={editAddress}
                                         onChange={(e) => setEditAddress(e.target.value)}
-                                        placeholder="أدخل عنوانك"
+                                        placeholder={t('myAccount.addressPlaceholder')}
                                         className="edit-input"
                                         rows={2}
                                     />
                                 ) : (
-                                    <p className="field-value">{customer.address || 'لم يتم إضافة عنوان'}</p>
+                                    <p className="field-value">{customer.address || t('myAccount.noAddress')}</p>
                                 )}
                             </div>
 
@@ -328,7 +331,7 @@ export default function MyAccountPage() {
                                 <div className="edit-actions">
                                     <button className="save-btn" onClick={handleSaveProfile} disabled={saving}>
                                         <Save size={16} />
-                                        {saving ? 'جاري الحفظ...' : 'حفظ'}
+                                        {saving ? t('myAccount.saving') : t('myAccount.save')}
                                     </button>
                                     <button className="cancel-btn" onClick={() => {
                                         setEditing(false)
@@ -336,13 +339,13 @@ export default function MyAccountPage() {
                                         setEditAddress(customer.address || '')
                                     }}>
                                         <X size={16} />
-                                        إلغاء
+                                        {t('myAccount.cancel')}
                                     </button>
                                 </div>
                             ) : (
                                 <button className="edit-btn" onClick={() => setEditing(true)}>
                                     <Edit3 size={16} />
-                                    تعديل البيانات
+                                    {t('myAccount.editDetails')}
                                 </button>
                             )}
                         </div>

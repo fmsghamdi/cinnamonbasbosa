@@ -4,17 +4,27 @@ import Link from 'next/link'
 import { ShoppingBag, Settings, Moon, Sun, User } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { useTheme } from '@/context/ThemeContext'
+import { useLanguage } from '@/context/LanguageContext'
 
 import Image from 'next/image'
 
 export default function Navbar() {
   const { toggleCart, items } = useCart()
   const { theme, toggleTheme } = useTheme()
+  const { language, toggleLanguage, t } = useLanguage()
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
     <nav className="navbar">
       <div className="container navbar-content">
+        <button
+          className="static-lang-btn"
+          onClick={toggleLanguage}
+          title={t('common.language')}
+        >
+          {t('common.language')}
+        </button>
+
         <Link href="/" className="logo-link">
           <Image
             src="/logo-brand.svg"
@@ -32,18 +42,18 @@ export default function Navbar() {
           <button
             className="theme-btn"
             onClick={toggleTheme}
-            aria-label={theme === 'light' ? 'الوضع الليلي' : 'الوضع النهاري'}
-            title={theme === 'light' ? 'الوضع الليلي' : 'الوضع النهاري'}
+            aria-label={theme === 'light' ? t('common.darkMode') : t('common.lightMode')}
+            title={theme === 'light' ? t('common.darkMode') : t('common.lightMode')}
           >
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
           </button>
-          <Link href="/my-account" className="account-btn" aria-label="حسابي" title="حسابي">
+          <Link href="/my-account" className="account-btn" aria-label={t('common.myAccount')} title={t('common.myAccount')}>
             <User size={22} />
           </Link>
-          <Link href="/admin" className="admin-btn" aria-label="Admin Dashboard">
+          <Link href="/admin" className="admin-btn" aria-label={t('common.adminDashboard')} title={t('common.adminDashboard')}>
             <Settings size={24} />
           </Link>
-          <button className="cart-btn" aria-label="Open Cart" onClick={toggleCart}>
+          <button className="cart-btn" aria-label={t('common.cart')} title={t('common.cart')} onClick={toggleCart}>
             <ShoppingBag size={24} />
             {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </button>
@@ -68,6 +78,29 @@ export default function Navbar() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          position: relative;
+          padding-right: 90px;
+        }
+        .static-lang-btn {
+          position: absolute;
+          right: 0px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: var(--primary);
+          color: white;
+          border: none;
+          padding: 6px 14px;
+          border-radius: 20px;
+          font-family: var(--font-heading);
+          font-weight: 700;
+          font-size: 0.85rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          z-index: 1001;
+        }
+        .static-lang-btn:hover {
+          background: var(--primary-dark, #b54722);
+          transform: translateY(-50%) scale(1.05);
         }
         .logo {
           font-family: var(--font-heading);

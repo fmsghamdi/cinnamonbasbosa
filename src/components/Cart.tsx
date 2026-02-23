@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 
 export default function Cart() {
   const { isOpen, toggleCart, items, removeFromCart, updateQuantity, total } = useCart()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
 
@@ -66,7 +66,7 @@ export default function Cart() {
                       {/* Fallback image */}
                       <img
                         src={item.imagePath || '/placeholder.png'}
-                        alt={item.name}
+                        alt={language === 'en' && item.nameEn ? item.nameEn : item.name}
                         className="item-image"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = 'https://placehold.co/100x100?text=Sweet'
@@ -76,7 +76,7 @@ export default function Cart() {
 
                     <div className="item-details">
                       <div className="flex justify-between items-start">
-                        <h4 className="font-bold text-gray-800 text-sm line-clamp-1">{item.name}</h4>
+                        <h4 className="font-bold text-gray-800 text-sm line-clamp-1">{language === 'en' && item.nameEn ? item.nameEn : item.name}</h4>
                         {item.options && (
                           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full mt-1 inline-block">
                             {item.options}

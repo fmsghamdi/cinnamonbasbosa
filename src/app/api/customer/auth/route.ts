@@ -33,13 +33,26 @@ export async function POST(request: Request) {
                 })
             }
 
+            // Get last order with location for this customer
+            const lastOrder = await prisma.order.findFirst({
+                where: {
+                    customerId: customer.id,
+                    latitude: { not: null },
+                    longitude: { not: null },
+                },
+                orderBy: { createdAt: 'desc' },
+                select: { latitude: true, longitude: true }
+            })
+
             return NextResponse.json({
                 success: true,
                 customer: {
                     id: customer.id,
                     name: customer.name,
                     phone: customer.phone,
-                    address: customer.address
+                    address: customer.address,
+                    latitude: lastOrder?.latitude || null,
+                    longitude: lastOrder?.longitude || null,
                 }
             })
         }

@@ -46,6 +46,7 @@ export default function CheckoutPage() {
     const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null)
     const [showMap, setShowMap] = useState(false)
     const [tempLocation, setTempLocation] = useState<{ lat: number, lng: number }>({ lat: 21.3891, lng: 39.8579 }) // Default: Makkah
+    const [mapOpenLocation, setMapOpenLocation] = useState<{ lat: number, lng: number }>({ lat: 21.3891, lng: 39.8579 }) // Location to open map with
     const [deliveryDate, setDeliveryDate] = useState('')
     const [deliveryTime, setDeliveryTime] = useState('')
     const [paymentMethod, setPaymentMethod] = useState('')
@@ -224,6 +225,13 @@ export default function CheckoutPage() {
             if (res.ok) {
                 setCustomerName(data.customer.name)
                 if (data.customer.address) setAddress(data.customer.address)
+                // Restore saved location from last order
+                if (data.customer.latitude && data.customer.longitude) {
+                    const savedLat = data.customer.latitude
+                    const savedLng = data.customer.longitude
+                    setLocation({ lat: savedLat, lng: savedLng })
+                    setTempLocation({ lat: savedLat, lng: savedLng })
+                }
                 setIsLoggedIn(true)
                 setLoginError('')
             } else {
@@ -238,7 +246,9 @@ export default function CheckoutPage() {
 
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
-            // If geolocation not supported, open map with default location (Makkah)
+            // If geolocation not supported, open map with saved or default location
+            const openLoc = location || tempLocation
+            setMapOpenLocation(openLoc)
             setShowMap(true)
             return
         }
@@ -249,20 +259,24 @@ export default function CheckoutPage() {
             (pos) => {
                 const userLat = pos.coords.latitude
                 const userLng = pos.coords.longitude
-                setTempLocation({ lat: userLat, lng: userLng })
+                const gpsLoc = { lat: userLat, lng: userLng }
+                setTempLocation(gpsLoc)
+                setMapOpenLocation(gpsLoc) // Open map at GPS position
                 setIsGettingLocation(false)
                 setShowMap(true)
             },
             (error) => {
                 console.error('GPS Error:', error)
                 setIsGettingLocation(false)
-                // If location denied, open map with default location
+                // If GPS fails, open map with saved location or default
+                const openLoc = location || tempLocation
+                setMapOpenLocation(openLoc)
                 setShowMap(true)
             },
             {
                 enableHighAccuracy: true,
                 timeout: 10000,
-                maximumAge: 60000
+                maximumAge: 0
             }
         )
     }
@@ -539,7 +553,10 @@ export default function CheckoutPage() {
                                                 <span dir="ltr">{location.lat.toFixed(5)}, {location.lng.toFixed(5)}</span>
                                             </div>
                                             <button
-                                                onClick={() => setShowMap(true)}
+                                                onClick={() => {
+                                                    if (location) setMapOpenLocation(location)
+                                                    setShowMap(true)
+                                                }}
                                                 className="change-location-btn"
                                             >
                                                 <Map size={14} /> {t('checkout.changeLocation')}
@@ -549,8 +566,8 @@ export default function CheckoutPage() {
 
                                     {showMap && (
                                         <MapPicker
-                                            lat={location?.lat || tempLocation.lat}
-                                            lng={location?.lng || tempLocation.lng}
+                                            lat={mapOpenLocation.lat}
+                                            lng={mapOpenLocation.lng}
                                             onLocationChange={handleMapLocationConfirm}
                                             onClose={() => setShowMap(false)}
                                         />

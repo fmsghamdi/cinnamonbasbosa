@@ -111,7 +111,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
             <div className="product-image">
               <img
                 src={product.imagePath || 'https://placehold.co/400x300/D2691E/FFFFFF?text=Product'}
-                alt={product.name}
+                alt={language === 'en' && product.nameEn ? product.nameEn : product.name}
                 className="img-cover"
               />
               <div className="image-overlay">
@@ -125,9 +125,9 @@ export default function ProductGrid({ products }: ProductGridProps) {
               </div>
             </div>
             <div className="product-details">
-              <h3>{product.name}</h3>
-              <p className="price">{product.price} ر.س</p>
-              {product.description && <p className="desc">{product.description}</p>}
+              <h3>{language === 'en' && product.nameEn ? product.nameEn : product.name}</h3>
+              <p className="price">{product.price} {t('common.currency')}</p>
+              {(language === 'en' ? product.descriptionEn || product.description : product.description) && <p className="desc">{language === 'en' && product.descriptionEn ? product.descriptionEn : product.description}</p>}
               <button
                 className={`add-btn ${addedId === product.id ? 'added' : ''}`}
                 onClick={() => handleAddToCart(product)}
@@ -155,7 +155,7 @@ export default function ProductGrid({ products }: ProductGridProps) {
               <button onClick={() => setCustomizingProduct(null)}><X size={20} /></button>
             </div>
             <div className="modal-body">
-              <p className="product-name">{customizingProduct.name}</p>
+              <p className="product-name">{language === 'en' && customizingProduct.nameEn ? customizingProduct.nameEn : customizingProduct.name}</p>
               <p className="modal-subtitle">{t('products.optionsSubtitle')}</p>
 
               <div className="options-grid">

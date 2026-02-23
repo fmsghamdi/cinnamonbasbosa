@@ -13,9 +13,11 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
             where: { id },
             data: {
                 name: body.name,
+                nameEn: body.nameEn || null,
                 price: parseFloat(body.price),
                 imagePath: body.imagePath,
                 description: body.description,
+                descriptionEn: body.descriptionEn || null,
             },
         })
         return NextResponse.json(product)

@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import Script from 'next/script'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface MapPickerProps {
     lat: number
@@ -20,43 +21,43 @@ export default function MapPicker({ lat, lng, onLocationChange, onClose }: MapPi
     const mapRef = useRef<HTMLDivElement>(null)
     const mapInstance = useRef<any>(null)
     const markerRef = useRef<any>(null)
-    const [leafletLoaded, setLeafletLoaded] = useState(false)
+    const [leafletLoaded, setLeafletLoaded] = useState(!!window?.L)
     const [selectedLat, setSelectedLat] = useState(lat)
     const [selectedLng, setSelectedLng] = useState(lng)
+    const { t } = useLanguage()
+    const initializedRef = useRef(false)
 
+    // Initialize map only once when Leaflet is ready
     useEffect(() => {
-        if (!leafletLoaded || !mapRef.current || mapInstance.current) return
+        if (!leafletLoaded || !mapRef.current || initializedRef.current) return
 
         const L = window.L
         if (!L) return
 
-        // Initialize map
+        initializedRef.current = true
+
         const map = L.map(mapRef.current, {
             center: [lat, lng],
             zoom: 17,
             zoomControl: true,
         })
 
-        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap',
             maxZoom: 19,
         }).addTo(map)
 
-        // Create draggable marker
         const marker = L.marker([lat, lng], {
             draggable: true,
             autoPan: true,
         }).addTo(map)
 
-        // Update coordinates when marker is dragged
         marker.on('dragend', () => {
             const pos = marker.getLatLng()
             setSelectedLat(pos.lat)
             setSelectedLng(pos.lng)
         })
 
-        // Update marker when map is clicked
         map.on('click', (e: any) => {
             marker.setLatLng(e.latlng)
             setSelectedLat(e.latlng.lat)
@@ -66,15 +67,18 @@ export default function MapPicker({ lat, lng, onLocationChange, onClose }: MapPi
         mapInstance.current = map
         markerRef.current = marker
 
-        // Fix map rendering issue
+        // Multiple invalidateSize calls to ensure tiles render properly
         setTimeout(() => map.invalidateSize(), 100)
+        setTimeout(() => map.invalidateSize(), 300)
+        setTimeout(() => map.invalidateSize(), 600)
 
         return () => {
             map.remove()
             mapInstance.current = null
             markerRef.current = null
+            initializedRef.current = false
         }
-    }, [leafletLoaded, lat, lng])
+    }, [leafletLoaded]) // Only depends on leafletLoaded, NOT lat/lng
 
     const handleConfirm = () => {
         onLocationChange(selectedLat, selectedLng)
@@ -102,8 +106,8 @@ export default function MapPicker({ lat, lng, onLocationChange, onClose }: MapPi
             <div className="map-overlay">
                 <div className="map-container-wrapper">
                     <div className="map-header">
-                        <h4>📍 حدد موقعك على الخريطة</h4>
-                        <p>اضغط على الخريطة أو اسحب العلامة لتحديد الموقع</p>
+                        <h4>{t('checkout.mapTitle')}</h4>
+                        <p>{t('checkout.mapSubtitle')}</p>
                     </div>
 
                     <div
@@ -117,10 +121,10 @@ export default function MapPicker({ lat, lng, onLocationChange, onClose }: MapPi
 
                     <div className="map-actions">
                         <button className="btn-confirm" onClick={handleConfirm}>
-                            ✅ تأكيد الموقع
+                            ✅ {t('checkout.confirmLocation')}
                         </button>
                         <button className="btn-cancel" onClick={onClose}>
-                            إلغاء
+                            {t('checkout.cancel')}
                         </button>
                     </div>
                 </div>

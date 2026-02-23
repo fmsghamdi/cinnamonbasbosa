@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Languages } from 'lucide-react'
 import { Product } from '@/types'
 import { useLanguage } from '@/context/LanguageContext'
 
@@ -13,9 +13,10 @@ export default function ProductsPage() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [uploading, setUploading] = useState(false)
     const [imagePreview, setImagePreview] = useState<string>('')
+    const [isTranslating, setIsTranslating] = useState(false)
 
     const [formData, setFormData] = useState({
-        name: '', price: '', description: '', imagePath: ''
+        name: '', nameEn: '', price: '', description: '', descriptionEn: '', imagePath: ''
     })
 
     useEffect(() => {
@@ -42,17 +43,57 @@ export default function ProductsPage() {
             setEditingProduct(product)
             setFormData({
                 name: product.name,
+                nameEn: product.nameEn || '',
                 price: String(product.price),
                 description: product.description || '',
+                descriptionEn: product.descriptionEn || '',
                 imagePath: product.imagePath
             })
             setImagePreview(product.imagePath)
         } else {
             setEditingProduct(null)
-            setFormData({ name: '', price: '', description: '', imagePath: '' })
+            setFormData({ name: '', nameEn: '', price: '', description: '', descriptionEn: '', imagePath: '' })
             setImagePreview('')
         }
         setModalOpen(true)
+    }
+
+    const handleTranslate = async () => {
+        if (!formData.name && !formData.description) return
+        setIsTranslating(true)
+        try {
+            let translatedName = formData.nameEn
+            let translatedDesc = formData.descriptionEn
+
+            if (formData.name && !formData.nameEn) {
+                const res = await fetch('/api/translate', {
+                    method: 'POST',
+                    body: JSON.stringify({ text: formData.name, from: 'ar', to: 'en' })
+                })
+                const data = await res.json()
+                if (data.translatedText) translatedName = data.translatedText
+            }
+
+            if (formData.description && !formData.descriptionEn) {
+                const res = await fetch('/api/translate', {
+                    method: 'POST',
+                    body: JSON.stringify({ text: formData.description, from: 'ar', to: 'en' })
+                })
+                const data = await res.json()
+                if (data.translatedText) translatedDesc = data.translatedText
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                nameEn: translatedName,
+                descriptionEn: translatedDesc
+            }))
+        } catch (error) {
+            console.error('Translation failed', error)
+            alert(t('admin.unexpectedErrorText'))
+        } finally {
+            setIsTranslating(false)
+        }
     }
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -167,14 +208,32 @@ export default function ProductsPage() {
                             <button onClick={() => setModalOpen(false)}><X /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="modal-body">
+                            <div className="form-group-translate-row">
+                                <div className="form-group flex-1">
+                                    <label>{t('admin.productNameAr')} *</label>
+                                    <input
+                                        required
+                                        className="input"
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group flex-1">
+                                    <label>{t('admin.productNameEn')}</label>
+                                    <input
+                                        className="input"
+                                        dir="ltr"
+                                        value={formData.nameEn}
+                                        onChange={e => setFormData({ ...formData, nameEn: e.target.value })}
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                            </div>
                             <div className="form-group">
-                                <label>{t('admin.productName')}</label>
-                                <input
-                                    required
-                                    className="input"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                />
+                                <button type="button" className="btn translate-btn" onClick={handleTranslate} disabled={isTranslating}>
+                                    <Languages size={16} />
+                                    {isTranslating ? t('admin.translating') : t('admin.autoTranslate')}
+                                </button>
                             </div>
                             <div className="form-group">
                                 <label>{t('admin.price')}</label>
@@ -207,13 +266,24 @@ export default function ProductsPage() {
                                     />
                                 </div>
                             </div>
-                            <div className="form-group">
-                                <label>{t('admin.description')}</label>
-                                <textarea
-                                    className="input"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                />
+                            <div className="form-group-translate-row">
+                                <div className="form-group flex-1">
+                                    <label>{t('admin.descriptionAr')}</label>
+                                    <textarea
+                                        className="input"
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group flex-1">
+                                    <label>{t('admin.descriptionEn')}</label>
+                                    <textarea
+                                        className="input"
+                                        dir="ltr"
+                                        value={formData.descriptionEn}
+                                        onChange={e => setFormData({ ...formData, descriptionEn: e.target.value })}
+                                    />
+                                </div>
                             </div>
                             <button type="submit" className="btn btn-primary full-width">{t('admin.save')}</button>
                         </form>
@@ -295,8 +365,27 @@ export default function ProductsPage() {
              margin-bottom: 1.5rem;
           }
           .form-group { margin-bottom: 1rem; }
+          .form-group-translate-row { display: flex; gap: 1rem; margin-bottom: 0.5rem; }
+          .flex-1 { flex: 1; }
           .input { width: 100%; padding: 0.75rem; border: 1px solid var(--card-border, #ddd); border-radius: 6px; background: var(--bg, white); color: var(--text, inherit); }
           .full-width { width: 100%; }
+           
+          .translate-btn {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              background: #4285f4;
+              color: white;
+              border: none;
+              padding: 0.5rem 1rem;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              cursor: pointer;
+              margin-bottom: 1rem;
+              transition: 0.2s;
+          }
+          .translate-btn:hover { background: #3367d6; }
+          .translate-btn:disabled { opacity: 0.7; cursor: not-allowed; }
            
            .image-upload-section {
               display: flex;

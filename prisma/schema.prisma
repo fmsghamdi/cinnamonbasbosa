@@ -1,6 +1,5 @@
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -8,12 +7,14 @@ generator client {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  price       Float
-  imagePath   String
-  description String?
-  createdAt   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  name          String   // Arabic Name (Default)
+  nameEn        String?  // English Name
+  price         Float
+  imagePath     String
+  description   String?  // Arabic Description
+  descriptionEn String?  // English Description
+  createdAt     DateTime @default(now())
 }
 
 model Setting {

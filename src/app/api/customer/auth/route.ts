@@ -44,6 +44,15 @@ export async function POST(request: Request) {
                 select: { latitude: true, longitude: true }
             })
 
+            // Get saved addresses
+            const savedAddresses = await prisma.savedAddress.findMany({
+                where: { customerId: customer.id },
+                orderBy: [
+                    { isDefault: 'desc' },
+                    { createdAt: 'desc' }
+                ]
+            })
+
             return NextResponse.json({
                 success: true,
                 customer: {
@@ -53,6 +62,7 @@ export async function POST(request: Request) {
                     address: customer.address,
                     latitude: lastOrder?.latitude || null,
                     longitude: lastOrder?.longitude || null,
+                    savedAddresses
                 }
             })
         }

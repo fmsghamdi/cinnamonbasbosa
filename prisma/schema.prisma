@@ -23,13 +23,26 @@ model Setting {
 }
 
 model Customer {
-  id          Int      @id @default(autoincrement())
-  phone       String   @unique
-  name        String
-  password    String
-  address     String?
-  orders      Order[]
-  createdAt   DateTime @default(now())
+  id             Int            @id @default(autoincrement())
+  phone          String         @unique
+  name           String
+  password       String
+  address        String?
+  orders         Order[]
+  savedAddresses SavedAddress[]
+  createdAt      DateTime       @default(now())
+}
+
+model SavedAddress {
+  id         Int      @id @default(autoincrement())
+  label      String   // e.g. "منزلي", "مكتبي", "بيت أخواني"
+  address    String   // Text address details
+  latitude   Float
+  longitude  Float
+  isDefault  Boolean  @default(false)
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }
 
 model Order {

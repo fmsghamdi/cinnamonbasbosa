@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useCart } from '@/context/CartContext'
 import { useLanguage } from '@/context/LanguageContext'
-import { MapPin, Calendar, CreditCard, Banknote, Navigation, Smartphone, User, ArrowRight, Building2, Copy, Check, Info, Lock, Map } from 'lucide-react'
+import { MapPin, Calendar, CreditCard, Banknote, Navigation, Smartphone, User, ArrowRight, Building2, Copy, Check, Info, Lock, Map, Plus, Trash2, Star, Home, Briefcase, MapPinned, Bookmark } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const MapPicker = dynamic(() => import('@/components/MapPicker'), { ssr: false })
@@ -31,6 +31,15 @@ interface DeliveryZone {
     id: string
     name: string
     price: number
+}
+
+interface SavedAddress {
+    id: number
+    label: string
+    address: string
+    latitude: number
+    longitude: number
+    isDefault: boolean
 }
 
 export default function CheckoutPage() {
@@ -67,13 +76,27 @@ export default function CheckoutPage() {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [loginError, setLoginError] = useState('')
 
+    // Saved Addresses States
+    const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+    const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null)
+    const [showSaveAddressDialog, setShowSaveAddressDialog] = useState(false)
+    const [newAddressLabel, setNewAddressLabel] = useState('')
+    const [pendingLocationToSave, setPendingLocationToSave] = useState<{ lat: number, lng: number } | null>(null)
+    const [customerId, setCustomerId] = useState<number | null>(null)
+    const [addressFeedback, setAddressFeedback] = useState('')
+
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethods>({})
     const [copiedField, setCopiedField] = useState('')
 
     // --- Effects ---
 
     useEffect(() => {
-        if (items.length === 0) router.push('/')
+        const justPlaced = sessionStorage.getItem('order_just_placed')
+        if (justPlaced) {
+            sessionStorage.removeItem('order_just_placed')
+        } else if (items.length === 0) {
+            router.push('/')
+        }
 
         // Fetch Settings & Zones
         fetch('/api/settings')
@@ -224,13 +247,23 @@ export default function CheckoutPage() {
 
             if (res.ok) {
                 setCustomerName(data.customer.name)
+                setCustomerId(data.customer.id)
                 if (data.customer.address) setAddress(data.customer.address)
-                // Restore saved location from last order
-                if (data.customer.latitude && data.customer.longitude) {
-                    const savedLat = data.customer.latitude
-                    const savedLng = data.customer.longitude
-                    setLocation({ lat: savedLat, lng: savedLng })
-                    setTempLocation({ lat: savedLat, lng: savedLng })
+                // Load saved addresses
+                if (data.customer.savedAddresses && data.customer.savedAddresses.length > 0) {
+                    setSavedAddresses(data.customer.savedAddresses)
+                    // Auto-select default address
+                    const defaultAddr = data.customer.savedAddresses.find((a: SavedAddress) => a.isDefault)
+                    if (defaultAddr) {
+                        setSelectedAddressId(defaultAddr.id)
+                        setLocation({ lat: defaultAddr.latitude, lng: defaultAddr.longitude })
+                        setTempLocation({ lat: defaultAddr.latitude, lng: defaultAddr.longitude })
+                        setAddress(defaultAddr.address)
+                    }
+                } else if (data.customer.latitude && data.customer.longitude) {
+                    // Fallback to last order location
+                    setLocation({ lat: data.customer.latitude, lng: data.customer.longitude })
+                    setTempLocation({ lat: data.customer.latitude, lng: data.customer.longitude })
                 }
                 setIsLoggedIn(true)
                 setLoginError('')
@@ -284,6 +317,88 @@ export default function CheckoutPage() {
     const handleMapLocationConfirm = (lat: number, lng: number) => {
         setLocation({ lat, lng })
         setAddress(`تم تحديد الموقع: ${lat.toFixed(5)}, ${lng.toFixed(5)}`)
+        setSelectedAddressId(null) // Deselect saved address since user picked new location
+
+        // If logged in, offer to save this address
+        if (isLoggedIn && customerId) {
+            setPendingLocationToSave({ lat, lng })
+            setShowSaveAddressDialog(true)
+        }
+    }
+
+    const selectSavedAddress = (addr: SavedAddress) => {
+        setSelectedAddressId(addr.id)
+        setLocation({ lat: addr.latitude, lng: addr.longitude })
+        setTempLocation({ lat: addr.latitude, lng: addr.longitude })
+        setAddress(addr.address)
+    }
+
+    const handleSaveNewAddress = async () => {
+        if (!newAddressLabel.trim() || !pendingLocationToSave || !customerId) return
+
+        try {
+            const res = await fetch('/api/customer/addresses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customerId,
+                    label: newAddressLabel.trim(),
+                    address,
+                    latitude: pendingLocationToSave.lat,
+                    longitude: pendingLocationToSave.lng,
+                    isDefault: savedAddresses.length === 0
+                })
+            })
+
+            const data = await res.json()
+
+            if (res.ok) {
+                setSavedAddresses(prev => [...prev, data.address])
+                setSelectedAddressId(data.address.id)
+                setAddressFeedback(t('checkout.addressSaved'))
+                setTimeout(() => setAddressFeedback(''), 3000)
+            } else if (data.error === 'MAX_REACHED') {
+                setAddressFeedback(t('checkout.maxAddressesReached'))
+                setTimeout(() => setAddressFeedback(''), 3000)
+            }
+        } catch (e) {
+            console.error('Save address error:', e)
+        }
+
+        setShowSaveAddressDialog(false)
+        setNewAddressLabel('')
+        setPendingLocationToSave(null)
+    }
+
+    const handleDeleteAddress = async (addrId: number) => {
+        if (!confirm(t('checkout.confirmDeleteAddress'))) return
+        if (!customerId) return
+
+        try {
+            const res = await fetch(`/api/customer/addresses?id=${addrId}&customerId=${customerId}`, {
+                method: 'DELETE'
+            })
+
+            if (res.ok) {
+                setSavedAddresses(prev => prev.filter(a => a.id !== addrId))
+                if (selectedAddressId === addrId) {
+                    setSelectedAddressId(null)
+                    setLocation(null)
+                    setAddress('')
+                }
+                setAddressFeedback(t('checkout.addressDeleted'))
+                setTimeout(() => setAddressFeedback(''), 3000)
+            }
+        } catch (e) {
+            console.error('Delete address error:', e)
+        }
+    }
+
+    const getAddressIcon = (label: string) => {
+        const lower = label.toLowerCase()
+        if (lower.includes('منزل') || lower.includes('بيت') || lower.includes('home')) return <Home size={16} />
+        if (lower.includes('مكتب') || lower.includes('عمل') || lower.includes('office') || lower.includes('work')) return <Briefcase size={16} />
+        return <MapPinned size={16} />
     }
 
     const copyToClipboard = (text: string, field: string) => {
@@ -371,6 +486,7 @@ export default function CheckoutPage() {
             clearCart()
             const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`
             sessionStorage.setItem('pending_whatsapp_link', waLink)
+            sessionStorage.setItem('order_just_placed', 'true')
             window.location.href = `/order-success?id=${orderId}`
 
         } catch (e) {
@@ -529,6 +645,84 @@ export default function CheckoutPage() {
                                             <option key={z.id} value={z.id}>{z.name} ({z.price} {t('common.currency')})</option>
                                         ))}
                                     </select>
+
+                                    {/* Saved Addresses Section */}
+                                    {isLoggedIn && savedAddresses.length > 0 && (
+                                        <div className="saved-addresses-section">
+                                            <div className="saved-addr-header">
+                                                <Bookmark size={14} />
+                                                <span>{t('checkout.savedAddresses')}</span>
+                                            </div>
+                                            <div className="saved-addr-list">
+                                                {savedAddresses.map(addr => (
+                                                    <div
+                                                        key={addr.id}
+                                                        className={`saved-addr-chip ${selectedAddressId === addr.id ? 'active' : ''}`}
+                                                        onClick={() => selectSavedAddress(addr)}
+                                                    >
+                                                        <div className="addr-chip-icon">
+                                                            {getAddressIcon(addr.label)}
+                                                        </div>
+                                                        <div className="addr-chip-info">
+                                                            <span className="addr-chip-label">{addr.label}</span>
+                                                            {addr.isDefault && <span className="addr-default-badge">{t('checkout.defaultAddress')}</span>}
+                                                        </div>
+                                                        <button
+                                                            className="addr-delete-btn"
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr.id) }}
+                                                            title={t('checkout.deleteAddress')}
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <div
+                                                    className={`saved-addr-chip new-addr-chip ${selectedAddressId === null ? 'active' : ''}`}
+                                                    onClick={() => { setSelectedAddressId(null); setLocation(null); setAddress('') }}
+                                                >
+                                                    <Plus size={16} />
+                                                    <span>{t('checkout.useNewAddress')}</span>
+                                                </div>
+                                            </div>
+                                            {addressFeedback && (
+                                                <div className="addr-feedback">{addressFeedback}</div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Save Address Dialog */}
+                                    {showSaveAddressDialog && (
+                                        <div className="save-addr-dialog">
+                                            <div className="save-addr-dialog-content">
+                                                <p className="save-addr-title">{t('checkout.saveAddress')}</p>
+                                                <input
+                                                    type="text"
+                                                    placeholder={t('checkout.addressLabelPlaceholder')}
+                                                    value={newAddressLabel}
+                                                    onChange={e => setNewAddressLabel(e.target.value)}
+                                                    className="save-addr-input"
+                                                    autoFocus
+                                                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSaveNewAddress() } }}
+                                                />
+                                                <div className="save-addr-actions">
+                                                    <button
+                                                        className="save-addr-btn-confirm"
+                                                        onClick={handleSaveNewAddress}
+                                                        disabled={!newAddressLabel.trim()}
+                                                    >
+                                                        {t('checkout.saveAddress')}
+                                                    </button>
+                                                    <button
+                                                        className="save-addr-btn-skip"
+                                                        onClick={() => { setShowSaveAddressDialog(false); setNewAddressLabel(''); setPendingLocationToSave(null) }}
+                                                    >
+                                                        {t('checkout.cancel')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div className="location-row">
                                         <button
                                             onClick={getCurrentLocation}
@@ -848,6 +1042,185 @@ export default function CheckoutPage() {
                     transition: all 0.2s;
                 }
                 .tab.active { background: var(--card-bg); color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+                /* Saved Addresses */
+                .saved-addresses-section {
+                    margin-bottom: 12px;
+                    padding: 12px;
+                    background: var(--gray-100);
+                    border-radius: 12px;
+                    border: 1px solid var(--card-border);
+                }
+                .saved-addr-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    color: var(--text);
+                    margin-bottom: 10px;
+                }
+                .saved-addr-list {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+                .saved-addr-chip {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 14px;
+                    border-radius: 10px;
+                    border: 2px solid var(--card-border);
+                    background: var(--card-bg);
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    color: var(--text-muted);
+                    position: relative;
+                }
+                .saved-addr-chip:hover {
+                    border-color: var(--primary);
+                    background: #fff7ed;
+                }
+                .saved-addr-chip.active {
+                    border-color: var(--primary);
+                    background: #fff7ed;
+                    color: var(--primary);
+                    box-shadow: 0 2px 8px rgba(210, 105, 30, 0.15);
+                }
+                .addr-chip-icon {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 8px;
+                    background: var(--gray-100);
+                    flex-shrink: 0;
+                }
+                .saved-addr-chip.active .addr-chip-icon {
+                    background: rgba(210, 105, 30, 0.15);
+                    color: var(--primary);
+                }
+                .addr-chip-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .addr-chip-label {
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                }
+                .addr-default-badge {
+                    font-size: 0.65rem;
+                    color: #16a34a;
+                    font-weight: 600;
+                }
+                .addr-delete-btn {
+                    position: absolute;
+                    top: -6px;
+                    left: -6px;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: #ef4444;
+                    color: white;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid white;
+                    cursor: pointer;
+                    padding: 0;
+                    transition: transform 0.15s;
+                }
+                .saved-addr-chip:hover .addr-delete-btn {
+                    display: flex;
+                }
+                .addr-delete-btn:hover {
+                    transform: scale(1.15);
+                }
+                .new-addr-chip {
+                    border-style: dashed;
+                    color: var(--text-muted);
+                }
+                .new-addr-chip.active {
+                    border-style: dashed;
+                }
+                .addr-feedback {
+                    font-size: 0.8rem;
+                    color: #16a34a;
+                    font-weight: 600;
+                    margin-top: 8px;
+                    animation: fadeIn 0.3s;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-5px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                /* Save Address Dialog */
+                .save-addr-dialog {
+                    margin: 12px 0;
+                    animation: fadeIn 0.3s;
+                }
+                .save-addr-dialog-content {
+                    background: #fff7ed;
+                    border: 1px solid #fed7aa;
+                    border-radius: 12px;
+                    padding: 16px;
+                }
+                .save-addr-title {
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    color: #9a3412;
+                    margin-bottom: 10px;
+                }
+                .save-addr-input {
+                    width: 100%;
+                    padding: 10px 14px;
+                    border-radius: 10px;
+                    border: 1px solid #fed7aa;
+                    font-size: 0.9rem;
+                    background: white;
+                    color: var(--text);
+                    font-family: inherit;
+                    margin-bottom: 10px;
+                }
+                .save-addr-input:focus {
+                    outline: none;
+                    border-color: var(--primary);
+                    box-shadow: 0 0 0 3px rgba(210, 105, 30, 0.1);
+                }
+                .save-addr-actions {
+                    display: flex;
+                    gap: 8px;
+                }
+                .save-addr-btn-confirm {
+                    flex: 1;
+                    padding: 8px;
+                    background: linear-gradient(135deg, #D2691E, #b55a19);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    transition: transform 0.15s;
+                }
+                .save-addr-btn-confirm:hover { transform: scale(1.02); }
+                .save-addr-btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+                .save-addr-btn-skip {
+                    padding: 8px 16px;
+                    background: #f1f1f1;
+                    color: #666;
+                    border: none;
+                    border-radius: 8px;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                }
+                .save-addr-btn-skip:hover { background: #e5e5e5; }
 
                 .location-row { display: flex; gap: 8px; margin-top: 8px; }
                 .loc-btn { background: #fee2e2; color: #ef4444; width: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }

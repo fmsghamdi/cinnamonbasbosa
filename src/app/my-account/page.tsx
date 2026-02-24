@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
     User, ShoppingBag, LogOut, Edit3, Save, X, Phone, MapPin,
-    Package, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, ArrowRight
+    Package, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, ArrowRight,
+    Home, Briefcase, MapPinned, Trash2, Bookmark
 } from 'lucide-react'
 
 interface CustomerData {
@@ -26,6 +27,15 @@ interface OrderData {
     createdAt: string
 }
 
+interface SavedAddress {
+    id: number
+    label: string
+    address: string
+    latitude: number
+    longitude: number
+    isDefault: boolean
+}
+
 import { useLanguage } from '@/context/LanguageContext'
 
 export default function MyAccountPage() {
@@ -41,6 +51,7 @@ export default function MyAccountPage() {
     const [saving, setSaving] = useState(false)
     const [expandedOrder, setExpandedOrder] = useState<number | null>(null)
     const [saveMsg, setSaveMsg] = useState('')
+    const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
 
     useEffect(() => {
         const stored = localStorage.getItem('customer')
@@ -54,6 +65,7 @@ export default function MyAccountPage() {
         setEditName(cust.name)
         setEditAddress(cust.address || '')
         fetchOrders(cust.id)
+        fetchSavedAddresses(cust.id)
     }, [])
 
     const fetchOrders = async (customerId: number) => {
@@ -71,6 +83,39 @@ export default function MyAccountPage() {
         } finally {
             setLoading(false)
         }
+    }
+
+    const fetchSavedAddresses = async (customerId: number) => {
+        try {
+            const res = await fetch(`/api/customer/addresses?customerId=${customerId}`)
+            const data = await res.json()
+            if (data.addresses) setSavedAddresses(data.addresses)
+        } catch {
+            console.error('Error fetching saved addresses')
+        }
+    }
+
+    const handleDeleteAddress = async (addrId: number) => {
+        if (!customer) return
+        if (!confirm(t('checkout.confirmDeleteAddress'))) return
+
+        try {
+            const res = await fetch(`/api/customer/addresses?id=${addrId}&customerId=${customer.id}`, {
+                method: 'DELETE'
+            })
+            if (res.ok) {
+                setSavedAddresses(prev => prev.filter(a => a.id !== addrId))
+            }
+        } catch {
+            console.error('Error deleting address')
+        }
+    }
+
+    const getAddressIcon = (label: string) => {
+        const lower = label.toLowerCase()
+        if (lower.includes('منزل') || lower.includes('بيت') || lower.includes('home')) return <Home size={18} />
+        if (lower.includes('مكتب') || lower.includes('عمل') || lower.includes('office') || lower.includes('work')) return <Briefcase size={18} />
+        return <MapPinned size={18} />
     }
 
     const handleSaveProfile = async () => {
@@ -347,6 +392,55 @@ export default function MyAccountPage() {
                                     <Edit3 size={16} />
                                     {t('myAccount.editDetails')}
                                 </button>
+                            )}
+                        </div>
+
+                        {/* Saved Addresses Section */}
+                        <div className="saved-addr-section">
+                            <div className="saved-addr-title">
+                                <Bookmark size={16} />
+                                <span>{t('myAccount.savedAddresses')}</span>
+                            </div>
+
+                            {savedAddresses.length === 0 ? (
+                                <div className="no-addresses">
+                                    <MapPin size={32} />
+                                    <p>{t('myAccount.noSavedAddresses')}</p>
+                                    <p className="no-addr-hint">{t('myAccount.noSavedAddressesHint')}</p>
+                                </div>
+                            ) : (
+                                <div className="addr-grid">
+                                    {savedAddresses.map(addr => (
+                                        <div key={addr.id} className="addr-card">
+                                            <div className="addr-card-header">
+                                                <div className="addr-card-icon">
+                                                    {getAddressIcon(addr.label)}
+                                                </div>
+                                                <div className="addr-card-info">
+                                                    <span className="addr-card-label">{addr.label}</span>
+                                                    {addr.isDefault && <span className="addr-badge">{t('checkout.defaultAddress')}</span>}
+                                                </div>
+                                                <button
+                                                    className="addr-card-delete"
+                                                    onClick={() => handleDeleteAddress(addr.id)}
+                                                    title={t('checkout.deleteAddress')}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                            <p className="addr-card-text">{addr.address}</p>
+                                            <a
+                                                href={`https://www.google.com/maps?q=${addr.latitude},${addr.longitude}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="addr-card-map-link"
+                                            >
+                                                <MapPin size={12} />
+                                                {t('myAccount.viewOnMap')}
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -698,6 +792,115 @@ export default function MyAccountPage() {
                     transition: all 0.2s;
                 }
                 .cancel-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+                /* Saved Addresses in Profile */
+                .saved-addr-section {
+                    margin-top: 1.5rem;
+                }
+                .saved-addr-title {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: var(--text);
+                    margin-bottom: 1rem;
+                }
+                .no-addresses {
+                    text-align: center;
+                    padding: 2rem 1rem;
+                    background: white;
+                    border-radius: 12px;
+                    border: 1px dashed #e5e7eb;
+                    color: #d1d5db;
+                }
+                .no-addresses p {
+                    color: #9ca3af;
+                    margin-top: 0.75rem;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+                .no-addr-hint {
+                    font-size: 0.8rem !important;
+                    font-weight: 400 !important;
+                    color: #d1d5db !important;
+                    margin-top: 0.25rem !important;
+                }
+                .addr-grid {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                }
+                .addr-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 1rem 1.25rem;
+                    border: 1px solid #f3f4f6;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+                    transition: border-color 0.2s;
+                }
+                .addr-card:hover {
+                    border-color: var(--primary);
+                }
+                .addr-card-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-bottom: 0.5rem;
+                }
+                .addr-card-icon {
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    background: #fff7ed;
+                    color: var(--primary);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+                .addr-card-info {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                }
+                .addr-card-label {
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    color: var(--text);
+                }
+                .addr-badge {
+                    font-size: 0.7rem;
+                    color: #22c55e;
+                    font-weight: 600;
+                }
+                .addr-card-delete {
+                    color: #d1d5db;
+                    padding: 6px;
+                    border-radius: 8px;
+                    transition: all 0.2s;
+                }
+                .addr-card-delete:hover {
+                    color: #ef4444;
+                    background: #fef2f2;
+                }
+                .addr-card-text {
+                    font-size: 0.85rem;
+                    color: #6b7280;
+                    margin-bottom: 0.5rem;
+                    line-height: 1.4;
+                }
+                .addr-card-map-link {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    font-size: 0.8rem;
+                    color: var(--primary);
+                    font-weight: 600;
+                    transition: opacity 0.2s;
+                }
+                .addr-card-map-link:hover { opacity: 0.7; }
 
                 @media (max-width: 480px) {
                     .stats-row { gap: 1rem; padding: 1rem; }

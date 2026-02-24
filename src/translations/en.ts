@@ -94,7 +94,20 @@ export const en = {
         incorrectPassword: 'Incorrect Password',
         pleaseEnterPassword: 'Please enter your password',
         connectionError: 'Connection Error',
-        errorOccurred: 'An error occurred'
+        errorOccurred: 'An error occurred',
+        savedAddresses: 'Your Saved Addresses',
+        addNewAddress: 'Add New Address',
+        useNewAddress: 'New Address',
+        saveAddress: 'Save Address',
+        addressLabel: 'Address Name',
+        addressLabelPlaceholder: 'e.g. My Home, Office...',
+        deleteAddress: 'Delete',
+        confirmDeleteAddress: 'Delete this address?',
+        maxAddressesReached: 'Maximum reached (5 addresses)',
+        addressSaved: 'Address saved ✅',
+        addressDeleted: 'Address deleted',
+        setDefault: 'Set as default',
+        defaultAddress: 'Default'
     },
     admin: {
         dashboard: 'Dashboard',
@@ -385,6 +398,10 @@ export const en = {
         choosePassword: 'Choose password',
         registerBtn: 'Create Account',
         registeringBtn: 'Registering...',
-        home: 'Home'
+        home: 'Home',
+        savedAddresses: 'My Saved Addresses',
+        noSavedAddresses: 'No saved addresses',
+        noSavedAddressesHint: 'Add addresses during checkout to use them later',
+        viewOnMap: 'View on Map'
     }
 }

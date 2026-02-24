@@ -8,12 +8,35 @@ import { Suspense } from 'react'
 
 import { useLanguage } from '@/context/LanguageContext'
 
+interface ConfettiPiece {
+    left: string
+    animationDelay: string
+    animationDuration: string
+    backgroundColor: string
+    width: string
+    height: string
+}
+
 function OrderSuccessContent() {
     const searchParams = useSearchParams()
     const { t } = useLanguage()
     const orderId = searchParams.get('id') || ''
     const [countdown, setCountdown] = useState(15)
     const [whatsappLink, setWhatsappLink] = useState('')
+    const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([])
+
+    useEffect(() => {
+        const colors = ['#D2691E', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#ef4444']
+        const pieces = Array.from({ length: 30 }).map((_, i) => ({
+            left: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            backgroundColor: colors[i % 6],
+            width: `${6 + Math.random() * 6}px`,
+            height: `${6 + Math.random() * 6}px`,
+        }))
+        setConfettiPieces(pieces)
+    }, [])
 
     useEffect(() => {
         // Check for pending WhatsApp link
@@ -109,18 +132,11 @@ function OrderSuccessContent() {
 
             {/* Confetti Effect */}
             <div className="confetti-container" aria-hidden="true">
-                {Array.from({ length: 30 }).map((_, i) => (
+                {confettiPieces.map((piece, i) => (
                     <div
                         key={i}
                         className="confetti"
-                        style={{
-                            left: `${Math.random() * 100}%`,
-                            animationDelay: `${Math.random() * 3}s`,
-                            animationDuration: `${2 + Math.random() * 3}s`,
-                            backgroundColor: ['#D2691E', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#ef4444'][i % 6],
-                            width: `${6 + Math.random() * 6}px`,
-                            height: `${6 + Math.random() * 6}px`,
-                        }}
+                        style={piece}
                     />
                 ))}
             </div>

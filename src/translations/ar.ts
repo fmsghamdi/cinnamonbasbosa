@@ -94,7 +94,20 @@ export const ar = {
         incorrectPassword: 'كلمة المرور غير صحيحة',
         pleaseEnterPassword: 'الرجاء كتابة كلمة المرور',
         connectionError: 'خطأ في الاتصال',
-        errorOccurred: 'حدث خطأ'
+        errorOccurred: 'حدث خطأ',
+        savedAddresses: 'عناوينك المحفوظة',
+        addNewAddress: 'إضافة عنوان جديد',
+        useNewAddress: 'عنوان جديد',
+        saveAddress: 'حفظ العنوان',
+        addressLabel: 'اسم العنوان',
+        addressLabelPlaceholder: 'مثلاً: منزلي، مكتبي...',
+        deleteAddress: 'حذف',
+        confirmDeleteAddress: 'هل تريد حذف هذا العنوان؟',
+        maxAddressesReached: 'وصلت الحد الأقصى (5 عناوين)',
+        addressSaved: 'تم حفظ العنوان ✅',
+        addressDeleted: 'تم حذف العنوان',
+        setDefault: 'تعيين كافتراضي',
+        defaultAddress: 'الافتراضي'
     },
     admin: {
         dashboard: 'لوحة التحكم',
@@ -385,6 +398,10 @@ export const ar = {
         choosePassword: 'اختر كلمة مرور',
         registerBtn: 'إنشاء حساب',
         registeringBtn: 'جاري التسجيل...',
-        home: 'الرئيسية'
+        home: 'الرئيسية',
+        savedAddresses: 'عناويني المحفوظة',
+        noSavedAddresses: 'لا توجد عناوين محفوظة',
+        noSavedAddressesHint: 'أضف عناوينك عند الطلب لاستخدامها لاحقاً',
+        viewOnMap: 'عرض على الخريطة'
     }
 }

@@ -84,6 +84,7 @@ export default function CheckoutPage() {
     const [pendingLocationToSave, setPendingLocationToSave] = useState<{ lat: number, lng: number } | null>(null)
     const [customerId, setCustomerId] = useState<number | null>(null)
     const [addressFeedback, setAddressFeedback] = useState('')
+    const [pendingAddressLabel, setPendingAddressLabel] = useState('')
 
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethods>({})
     const [copiedField, setCopiedField] = useState('')
@@ -366,6 +367,7 @@ export default function CheckoutPage() {
             }
         } else {
             // New user: store label temporarily, will be saved after account creation
+            setPendingAddressLabel(newAddressLabel.trim())
             setAddressFeedback(t('checkout.addressSaved'))
             setTimeout(() => setAddressFeedback(''), 3000)
         }
@@ -437,14 +439,14 @@ export default function CheckoutPage() {
                     customerId = d.customer.id
 
                     // Save pending address for new customer
-                    if (customerId && newAddressLabel.trim() && location) {
+                    if (customerId && pendingAddressLabel && location) {
                         try {
                             await fetch('/api/customer/addresses', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     customerId,
-                                    label: newAddressLabel.trim(),
+                                    label: pendingAddressLabel,
                                     address,
                                     latitude: location.lat,
                                     longitude: location.lng,

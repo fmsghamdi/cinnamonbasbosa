@@ -317,13 +317,11 @@ export default function CheckoutPage() {
     const handleMapLocationConfirm = (lat: number, lng: number) => {
         setLocation({ lat, lng })
         setAddress(`تم تحديد الموقع: ${lat.toFixed(5)}, ${lng.toFixed(5)}`)
-        setSelectedAddressId(null) // Deselect saved address since user picked new location
+        setSelectedAddressId(null)
 
-        // If logged in, offer to save this address
-        if (isLoggedIn && customerId) {
-            setPendingLocationToSave({ lat, lng })
-            setShowSaveAddressDialog(true)
-        }
+        // Show save address dialog for ALL users
+        setPendingLocationToSave({ lat, lng })
+        setShowSaveAddressDialog(true)
     }
 
     const selectSavedAddress = (addr: SavedAddress) => {
@@ -334,35 +332,42 @@ export default function CheckoutPage() {
     }
 
     const handleSaveNewAddress = async () => {
-        if (!newAddressLabel.trim() || !pendingLocationToSave || !customerId) return
+        if (!newAddressLabel.trim() || !pendingLocationToSave) return
 
-        try {
-            const res = await fetch('/api/customer/addresses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    customerId,
-                    label: newAddressLabel.trim(),
-                    address,
-                    latitude: pendingLocationToSave.lat,
-                    longitude: pendingLocationToSave.lng,
-                    isDefault: savedAddresses.length === 0
+        if (isLoggedIn && customerId) {
+            // Logged-in user: save immediately via API
+            try {
+                const res = await fetch('/api/customer/addresses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerId,
+                        label: newAddressLabel.trim(),
+                        address,
+                        latitude: pendingLocationToSave.lat,
+                        longitude: pendingLocationToSave.lng,
+                        isDefault: savedAddresses.length === 0
+                    })
                 })
-            })
 
-            const data = await res.json()
+                const data = await res.json()
 
-            if (res.ok) {
-                setSavedAddresses(prev => [...prev, data.address])
-                setSelectedAddressId(data.address.id)
-                setAddressFeedback(t('checkout.addressSaved'))
-                setTimeout(() => setAddressFeedback(''), 3000)
-            } else if (data.error === 'MAX_REACHED') {
-                setAddressFeedback(t('checkout.maxAddressesReached'))
-                setTimeout(() => setAddressFeedback(''), 3000)
+                if (res.ok) {
+                    setSavedAddresses(prev => [...prev, data.address])
+                    setSelectedAddressId(data.address.id)
+                    setAddressFeedback(t('checkout.addressSaved'))
+                    setTimeout(() => setAddressFeedback(''), 3000)
+                } else if (data.error === 'MAX_REACHED') {
+                    setAddressFeedback(t('checkout.maxAddressesReached'))
+                    setTimeout(() => setAddressFeedback(''), 3000)
+                }
+            } catch (e) {
+                console.error('Save address error:', e)
             }
-        } catch (e) {
-            console.error('Save address error:', e)
+        } else {
+            // New user: store label temporarily, will be saved after account creation
+            setAddressFeedback(t('checkout.addressSaved'))
+            setTimeout(() => setAddressFeedback(''), 3000)
         }
 
         setShowSaveAddressDialog(false)
@@ -430,6 +435,26 @@ export default function CheckoutPage() {
                 if (regRes.ok) {
                     const d = await regRes.json()
                     customerId = d.customer.id
+
+                    // Save pending address for new customer
+                    if (customerId && newAddressLabel.trim() && location) {
+                        try {
+                            await fetch('/api/customer/addresses', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    customerId,
+                                    label: newAddressLabel.trim(),
+                                    address,
+                                    latitude: location.lat,
+                                    longitude: location.lng,
+                                    isDefault: true
+                                })
+                            })
+                        } catch (e) {
+                            console.error('Save new user address error:', e)
+                        }
+                    }
                 }
             }
 
